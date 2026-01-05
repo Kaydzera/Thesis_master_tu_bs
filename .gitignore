@@ -15,7 +15,6 @@
 *.xdv
 
 # LaTeX build outputs
-main.pdf
 *.dvi
 *.ps
 
