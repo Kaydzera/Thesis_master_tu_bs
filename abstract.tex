@@ -1,0 +1,9 @@
+This thesis presents a branch-and-bound algorithm for solving a bilevel optimization problem combining knapsack selection with scheduling. 
+The leader selects for each given job type a number of jobs within a budget constraint to maximize system capacity (makespan), 
+while the follower optimally schedules the selected jobs across machines to minimize the makespan. 
+We develop tight upper bounds using a knapsack scheduling relaxation and implement efficient pruning strategies. 
+Computational experiments demonstrate speedups of up to 188× compared to complete enumeration, 
+with an average pruning rate of 37\%. The algorithm efficiently solves instances with up to 10 job types and 10 machines, 
+providing optimal solutions in seconds where enumeration requires hours or is infeasible.
+
+\textbf{Keywords:} Bilevel optimization, branch-and-bound, knapsack problem, scheduling, combinatorial optimization

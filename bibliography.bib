@@ -1,0 +1,78 @@
+% Bibliography for Bilevel Optimization Thesis
+
+@article{bilevel-survey,
+  title={Bilevel programming: A survey},
+  author={Colson, Beno{\^\i}t and Marcotte, Patrice and Savard, Gilles},
+  journal={4OR},
+  volume={3},
+  number={2},
+  pages={87--107},
+  year={2005},
+  publisher={Springer}
+}
+
+@book{knapsack-book,
+  title={Knapsack problems},
+  author={Kellerer, Hans and Pferschy, Ulrich and Pisinger, David},
+  year={2004},
+  publisher={Springer}
+}
+
+@article{scheduling-survey,
+  title={A survey on makespan minimization in semi-online environments},
+  author={Seiden, Steven S},
+  journal={Journal of Scheduling},
+  volume={14},
+  number={4},
+  pages={313--326},
+  year={2011},
+  publisher={Springer}
+}
+
+@book{branch-and-bound,
+  title={Integer and combinatorial optimization},
+  author={Wolsey, Laurence A and Nemhauser, George L},
+  year={2014},
+  publisher={John Wiley \& Sons}
+}
+
+@article{list-scheduling,
+  title={Bounds for certain multiprocessing anomalies},
+  author={Graham, Ronald L},
+  journal={Bell System Technical Journal},
+  volume={45},
+  number={9},
+  pages={1563--1581},
+  year={1966},
+  publisher={Nokia Bell Labs}
+}
+
+@book{gurobi,
+  title={Gurobi Optimizer Reference Manual},
+  author={{Gurobi Optimization, LLC}},
+  year={2023},
+  url={https://www.gurobi.com}
+}
+
+% Add more references as needed
+% TODO: Add specific papers on bilevel knapsack problems
+% TODO: Add cloud computing application papers
+% TODO: Add recent bilevel optimization methods
+
+
+good to know. We will fix this later. Here is a list of things i would like to change
+1. The title does look a little funny. Can you pls increase the line distance there a bit?
+
+2. We call the mathematical problem to generate the upper bounds "ceiling knapsack relaxation". Can you pls change that to "knapsack problem with a modified objective" in the thesis?
+
+3. In the motivation, we used cloud computing as an example application. Can you pls instead use production scheduling? I think that fits better to the problem setting.
+
+4. From the contributions onwards, we use the term "bilevel knapsack-scheduling problem". This is a short and good name for Bilevel Parallel Machine Scheduling, but we need to introduce it properly. Can you pls add a sentence in the introduction that defines this name?
+with Adversarial Job Selection
+After the definition 2.1 pls add a note that acts as a potential placeholder for more theory that we might want to add later. 
+
+IN B.2.3 we define the follower problem. pls add a sentence that defines L_k as the load on machine k after scheduling.
+
+In C.2.2 we can add an example of a search tree for better understanding. i have already added a comment there to indicate where exactly it should go.
+
+After that we can start finihing the upper bound computation by inserting a proof there. I already have the proof on paper, we can do that next when you are done with these changes. Thanks a lot!

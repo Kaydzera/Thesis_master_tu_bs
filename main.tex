@@ -1,0 +1,287 @@
+% ===================================================================================
+% Master Thesis Template using TU Braunschweig Corporate Design
+% Based on tubs-latex-cd-lite template
+% ===================================================================================
+% User parameters - CUSTOMIZE THESE
+
+\newcommand{\myName}{Ole Damke}
+\newcommand{\myEMail}{o.damke@tu-braunschweig.de}
+\newcommand{\myInstituteName}{Institut für Mathematische Optimierung}
+\newcommand{\myInstituteImg}{}  % Optional: logos/FK1/informatik.pdf
+\newcommand{\myPaperTitle}{A Branch- and Bound Method for Bilevel Parallel Machine\\[0.5em]
+Scheduling with Adversarial Job Selection}
+\newcommand{\myPaperSubtitle}{}  % Optional subtitle
+\newcommand{\myReviewerOnePers}{Prof. Dr. Maximilian Merkert}
+\newcommand{\myReviewerOneInst}{Institut für Mathematische Optimierung}
+\newcommand{\myReviewerTwoPers}{Univ.-Prof. Dr. rer. nat. habil. Christian Kirches }  % Optional
+\newcommand{\myReviewerTwoInst}{Institut für Mathematische Optimierung}  % Optional
+\newcommand{\mySupervisorPers}{}  % Optional
+\newcommand{\mySupervisorInst}{}  % Optional
+\newcommand{\myCourseOfStudies}{Mathematik (M.Sc.)}
+\newcommand{\myMatriculationNumer}{5029861}
+\newcommand{\mySubmissionDate}{\today}
+
+% Optional sections (use \input{filename} to include from separate files)
+\newcommand{\myAcknowledgement}{}  % Optional
+\newcommand{\myAbstract}{\input{abstract}}
+\newcommand{\myPreface}{}  % Optional
+
+% ===================================================================================
+% Document class and template setup
+
+\documentclass[%
+    language=english,        % or german
+    paper=a4paper,
+    twoside=false,
+    parskip=half,
+    gauss]{tubsCD/tubscd}
+
+% Create warning if template used and no data to display was given
+\ifdefstring{\myName}{}{
+    \ClassWarning{tubscd}{Attempted to load template without individual variables. 
+    Please set your personal variables at the top of main.tex}%
+}{}
+
+% ===================================================================================
+% Additional packages for thesis content
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}  % Professional table formatting
+\usetikzlibrary{positioning}  % For TikZ node positioning
+
+% Additional theorem environments (definition already provided by template)
+\theoremstyle{remark}
+\newtheorem{note}{Note}[chapter]
+
+% Code listing setup
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{gray!10},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    tabsize=4,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    escapeinside={(*@}{@*)},
+}
+
+% Theorem environments
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{example}{Example}[section]
+
+% ===================================================================================
+% Bibliography setup
+
+\RequirePackage[autostyle=true]{csquotes}
+\RequirePackage[backend=biber,
+                style=alphabetic,
+                sorting=nyt
+               ]{biblatex}
+\addbibresource{bibliography.bib}
+
+% ===================================================================================
+% Template setup (title page and structure)
+
+\myInstitute{\myInstituteImg}{}
+
+\AtBeginDocument{
+    \begin{titlepage}
+        \drawSigil{
+            \centering
+            \sffamily
+            \Large
+            \vspace*{1.5cm}
+
+            {\huge\ifdefstring{\tubs@language}{german}{Masterarbeit}{Master Thesis}}
+
+            \ifdefstring{\tubs@language}{german}{Im Studiengang}{In the Course of Studies} 
+            {\LARGE\myCourseOfStudies}
+
+            \ifdefstring{\tubs@language}{german}{Am}{At the} {\LARGE\myInstituteName}
+
+            \vspace{1.5cm}
+
+            \textbf{\tubsFontgiant\myPaperTitle}
+
+            \ifdefstring{\myPaperSubtitle}{}{}{
+                \vspace{0.5cm}
+                \textbf{\Huge\myPaperSubtitle}
+            }
+
+            \vspace{2cm}
+
+            {\Huge\myName}
+
+            {\large\myMatriculationNumer}
+
+            {\large\myEMail}
+
+            \vspace{1.5cm}
+
+            \ifdefstring{\mySupervisorPers}{}{}{
+                \begin{tabular}{ll}
+                  \ifdefstring{\tubs@language}{german}{Betreut von}{Supervised by} & 
+                  {\LARGE\mySupervisorPers} \\
+                     & {\large\mySupervisorInst}
+                \end{tabular}
+
+                \vspace{1cm}
+            }
+
+            \ifdefstring{\myReviewerTwoPers}{}{
+                \begin{tabular}{ll}
+                  \ifdefstring{\tubs@language}{german}{Gutachter}{Reviewed by}: & 
+                  {\LARGE\myReviewerOnePers}\\
+                     & {\large\myReviewerOneInst}
+                \end{tabular}
+            }{
+                \begin{tabular}{ll}
+                  \ifdefstring{\tubs@language}{german}{Erstgutachter}{First Reviewer}: & 
+                  {\LARGE\myReviewerOnePers}\\
+                     & {\large\myReviewerOneInst}\\
+                  \ifdefstring{\tubs@language}{german}{Zweitgutachter}{Second Reviewer}: & 
+                  {\LARGE\myReviewerTwoPers}\\
+                     & {\large\myReviewerTwoInst}
+                \end{tabular}
+            }
+
+            \vfill
+
+            \ifdefstring{\tubs@language}{german}{Abgabedatum}{Submission Date}: 
+            {\LARGE\mySubmissionDate}
+
+            \rmfamily
+        }
+    \end{titlepage}
+
+    $~$\thispagestyle{empty}\clearpage
+    \pagenumbering{roman}
+
+    \tuPlainGeometry
+
+    \ifdefstring{\myAcknowledgement}{}{}{
+        \vspace*{\fill}
+        \begin{center}\textbf{\Large\ifdefstring{\tubs@language}{german}
+        {Danksagung}
+        {Acknowledgement}
+        }\end{center}
+        \myAcknowledgement
+        \vspace*{\fill}
+        \clearpage
+    }
+
+    \ifdefstring{\myAbstract}{}{}{
+        \begin{center}\textbf{\Large\ifdefstring{\tubs@language}{german}
+        {Zusammenfassung}
+        {Abstract}
+        }\end{center}
+        \myAbstract
+    }
+
+    \ifdefstring{\myPreface}{}{}{
+        \begin{center}\textbf{\Large\ifdefstring{\tubs@language}{german}
+        {Vorwort}
+        {Preface}
+        }\end{center}
+        \myPreface
+    }
+
+    \AddToHook{begindocument/end}{
+        \tableofcontents
+        \clearpage\pagenumbering{arabic}
+    }
+
+    \makeatletter
+    \let\orig@appendix\appendix
+    \renewcommand{\appendix}{%
+    \clearpage
+    \orig@appendix
+    \pagenumbering{Roman}%
+    }
+    \makeatother
+}
+
+% ===================================================================================
+% Document content
+
+\begin{document}
+
+% Main chapters
+\input{chapters/01_introduction}
+\input{chapters/02_problem_formulation}
+\input{chapters/03_methodology}
+\input{chapters/04_implementation}
+\input{chapters/05_experiments}
+\input{chapters/06_conclusion}
+
+% ===================================================================================
+% End matter
+
+\listoffigures
+\listoftables
+\printbibliography
+
+% Statutory declaration
+\ifdefstring{\tubs@language}{german}
+{
+    \chapter{Eidesstattliche Erklärung}
+
+    Ich erkläre hiermit an Eides statt, dass ich die vorliegende Masterarbeit 
+    „\myPaperTitle" selbstständig verfasst sowie alle benutzten Quellen und 
+    Hilfsmittel vollständig angegeben habe und dass die Arbeit nicht bereits 
+    als Prüfungsarbeit vorgelegen hat.
+
+    \vspace{1cm}
+
+    Braunschweig, den \mySubmissionDate
+
+    \vspace{3cm}
+
+    \underline{\hspace{10cm}}
+
+    (Unterschrift mit Vor- und Zuname)
+}{
+    \chapter{Statutory Declaration}
+
+    I hereby declare in lieu of an oath that I have written this master thesis 
+    „\myPaperTitle" independently and that I have cited all sources and aids 
+    used in full and that the thesis has not already been submitted as an 
+    examination paper.
+
+    \vspace{1cm}
+
+    Braunschweig, \mySubmissionDate
+
+    \vspace{3cm}
+
+    \underline{\hspace{10cm}}
+
+    (signature with first and last name)
+}
+
+\end{document}

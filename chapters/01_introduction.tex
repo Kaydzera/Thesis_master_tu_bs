@@ -1,0 +1,39 @@
+\chapter{Introduction}
+\label{sec:introduction}
+
+% TODO: Write introduction
+
+\section{Motivation}
+
+Resource allocation under uncertainty is a fundamental challenge in many real-world systems. Consider a production facility that must decide which types of jobs to accept within a limited budget, knowing that a scheduler will later assign these jobs to machines to minimize completion time. The facility manager wants to maximize system capacity while respecting budget constraints, but cannot directly control the scheduling decisions.
+
+This scenario exemplifies a \emph{bilevel optimization problem}, where one decision-maker (the leader) makes choices that affect another decision-maker (the follower), who then optimizes their own objective. Such problems arise in supply chain management, network design, resource allocation, and competitive markets.
+
+\section{Problem Overview}
+
+We study a bilevel optimization problem combining two classic operations research problems:
+\begin{itemize}
+    \item \textbf{Upper level (Leader):} Knapsack problem -- select job types within a budget
+    \item \textbf{Lower level (Follower):} Scheduling problem -- assign jobs to machines to minimize makespan
+\end{itemize}
+
+The leader's objective is to maximize the makespan (completion time). 
+This models a worst-case robust optimization approach, where the leader tries to account for the worst possible makespan,
+ even when the follower actually minimizes completion time by finding an optimal schedule.
+
+\section{Contributions}
+
+Throughout this thesis, we refer to this problem as the \emph{bilevel knapsack-scheduling problem}, which concisely describes the combination of knapsack-based job selection at the upper level and parallel machine scheduling at the lower level with adversarial job selection.
+
+This thesis makes the following contributions:
+\begin{enumerate}
+    \item Formal mathematical model of the bilevel knapsack-scheduling problem
+    \item Branch-and-bound algorithm with tight bounds based on a knapsack scheduling relaxation
+    \item Efficient dynamic programming solver for the bounding subproblem
+    \item Comprehensive computational study demonstrating practical scalability
+    \item Analysis of pruning effectiveness and comparison with complete enumeration
+\end{enumerate}
+
+\section{Organization}
+
+The remainder of this thesis is organized as follows. Section~\ref{sec:formulation} presents the mathematical formulation of the bilevel problem. Section~\ref{sec:methodology} describes the branch-and-bound algorithm and bounding techniques. Section~\ref{sec:implementation} discusses implementation details. Section~\ref{sec:experiments} reports computational results. Section~\ref{sec:conclusion} concludes with a summary and future research directions.

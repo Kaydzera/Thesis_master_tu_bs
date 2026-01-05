@@ -1,0 +1,99 @@
+\chapter{Problem Formulation}
+\label{sec:formulation}
+
+% TODO: Write problem formulation
+
+\section{Bilevel Optimization Framework}
+
+A bilevel optimization problem has a hierarchical structure with two decision-makers:
+
+\begin{definition}[Bilevel Optimization Problem]
+\label{def:bilevel}
+\begin{align}
+\max_{x} \quad & F(x, y^*(x)) \label{eq:bilevel-upper}\\
+\text{s.t.} \quad & x \in X \nonumber\\
+\text{where } y^*(x) \in & \arg\min_{y} \{f(x, y) : y \in Y(x)\} \label{eq:bilevel-lower}
+\end{align}
+\end{definition}
+
+\begin{note}
+This general framework encompasses a wide range of hierarchical optimization problems. Additional theoretical aspects, such as solution existence, uniqueness conditions, and computational complexity classes, may be discussed in future extensions of this work.
+\end{note}
+
+The leader chooses $x$ to optimize their objective $F$, anticipating that the follower will respond by solving their own optimization problem to find $y^*(x)$.
+
+\section{The Knapsack-Scheduling Problem}
+
+\subsection{Problem Data}
+
+\begin{itemize}
+    \item $n$ job types, indexed by $i = 1, \ldots, n$
+    \item Job type $i$ has:
+    \begin{itemize}
+        \item Processing time (duration): $d_i > 0$
+        \item Cost (price): $p_i > 0$
+    \end{itemize}
+    \item $m$ identical parallel machines
+    \item Total budget: $B > 0$
+\end{itemize}
+
+\subsection{Leader's Problem (Upper Level)}
+
+The leader selects how many jobs of each type to purchase:
+
+\textbf{Decision variables:} $x_i \in \mathbb{Z}_+$ = number of jobs of type $i$ to select
+
+\textbf{Constraints:}
+\begin{equation}
+\sum_{i=1}^{n} p_i x_i \leq B \quad \text{(budget constraint)}
+\end{equation}
+
+\textbf{Objective:} Maximize the makespan resulting from optimal scheduling:
+\begin{equation}
+\max_{x} \quad C_{\max}^*(x)
+\end{equation}
+where $C_{\max}^*(x)$ is the optimal makespan for the follower's problem given selection $x$.
+
+\subsection{Follower's Problem (Lower Level)}
+
+Given the leader's selection $x = (x_1, \ldots, x_n)$, the follower has a total of $\sum_{i=1}^{n} x_i$ jobs to schedule.
+
+\textbf{Decision variables:} For each job $j$, assign it to some machine
+
+\textbf{Objective:} Minimize makespan (maximum machine load)
+\begin{equation}
+C_{\max}^*(x) = \min \max_{k=1,\ldots,m} L_k
+\end{equation}
+where $L_k$ denotes the load on machine $k$, defined as the total processing time of all jobs assigned to machine $k$ after scheduling.
+
+\section{Complete Bilevel Formulation}
+
+\begin{align}
+\max_{x \in \mathbb{Z}_+^n} \quad & C_{\max}^*(x) \label{eq:leader-obj}\\
+\text{s.t.} \quad & \sum_{i=1}^{n} p_i x_i \leq B \label{eq:budget}\\
+\text{where } C_{\max}^*(x) = \quad & \min_{y} \max_{k=1}^{m} \sum_{i=1}^{n} \sum_{j=1}^{x_i} d_i \cdot y_{ijk} \label{eq:follower-obj}\\
+\text{s.t.} \quad & \sum_{k=1}^{m} y_{ijk} = 1 \quad \forall i, j \label{eq:assign}\\
+& y_{ijk} \in \{0, 1\} \quad \forall i, j, k \nonumber
+\end{align}
+
+Here, $y_{ijk} = 1$ if copy $j$ of job type $i$ is assigned to machine $k$.
+
+\section{Problem Characteristics}
+
+\begin{itemize}
+    \item \textbf{Complexity:} The problem is NP-hard, combining two NP-hard problems (knapsack and scheduling)
+    \item \textbf{Non-convexity:} The follower's optimal value function $C_{\max}^*(x)$ is non-convex and discontinuous
+    \item \textbf{Discrete bilevel:} Cannot use KKT conditions (only valid for continuous problems)
+    \item \textbf{Enumerative approach needed:} Must explore discrete solution space
+\end{itemize}
+
+\section{Interpretation: Why Maximize Makespan?}
+
+The leader maximizes makespan to ensure robust system capacity. This models scenarios where:
+\begin{itemize}
+    \item The leader wants to stresstest the system capacity
+    \item The follower (scheduler) will always try to minimize completion time by finding an optimal schedule
+    \item Models adversarial or worst-case planning
+\end{itemize}
+
+\textbf{Example:} A production manager selects job types (leader) knowing that a scheduler will minimize completion time (follower). The manager wants to maximize the workload the system can handle.

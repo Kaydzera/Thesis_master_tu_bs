@@ -1,0 +1,148 @@
+\chapter{Implementation Details}
+\label{sec:implementation}
+
+% TODO: Write implementation section
+
+\section{Software Architecture}
+
+The implementation consists of several modular components:
+
+\begin{itemize}
+    \item \textbf{models.py:} Data structures for problems and search nodes
+    \item \textbf{bnb.py:} Branch-and-bound solver with pruning logic
+    \item \textbf{knapsack\_dp.py:} Dynamic programming solver for ceiling knapsack bounds
+    \item \textbf{solvers.py:} List scheduling and IP formulations for follower
+    \item \textbf{bilevel\_gurobi.py:} Complete enumeration baseline
+    \item \textbf{logger.py:} Comprehensive logging and metrics collection
+\end{itemize}
+
+\section{Key Data Structures}
+
+\subsection{Problem Node}
+
+Each node in the search tree maintains:
+
+\begin{lstlisting}
+class ProblemNode:
+    job_occurrences: List[int]  # Quantities of each job type
+    depth: int                  # How many items decided
+    remaining_budget: float     # Budget left after decisions
+    _max_at_depth: float       # Cached contribution from decided items
+    _branch_type: str          # 'root', 'left', 'right', 'lower'
+\end{lstlisting}
+
+The cached value \texttt{\_max\_at\_depth} stores $\sum_{i=1}^{d} d_i \lceil x_i / m \rceil$ to avoid recomputation.
+
+\subsection{Ceiling Knapsack Solver}
+
+Pre-computes DP table for efficient bound queries:
+
+\begin{lstlisting}
+class CeilKnapsackSolver:
+    def __init__(self, costs, durations, m, max_budget):
+        # Build DP table: dp[i][b] = best value for items 0..i, budget b
+        # Items stored in REVERSED order for querying last k items
+        
+    def query(self, num_items, budget):
+        # Return best value using first num_items (last in original order)
+        return self.dp[num_items][budget]
+\end{lstlisting}
+
+\section{Algorithmic Optimizations}
+
+\subsection{1. Depth-First Search}
+
+We use a depth-first search strategy to explore the branch-and-bound tree:
+\begin{itemize}
+    \item Start with the heuristic solution to initialize the incumbent
+    \item Generate adjacent nodes (children) from the root
+    \item Prioritize lower children (nodes at greater depth) in the search order
+    \item Explore deeply into the tree before backtracking
+    \item Memory-efficient compared to breadth-first approaches
+\end{itemize}
+
+\subsection{2. Heuristic Initialization}
+
+We compute an initial incumbent solution in two stages:
+\begin{enumerate}
+    \item Solve a standard knapsack problem to maximize the sum of durations $\sum_i d_i x_i$ subject to the budget constraint $\sum_i p_i x_i \leq B$, without considering the scheduling aspect
+    \item Pass the resulting job selection to the scheduler, which solves the follower's scheduling problem optimally via integer programming
+\end{enumerate}
+This approach provides a strong starting solution by selecting jobs with high total duration, which the scheduler then arranges to achieve a large makespan.
+
+\subsection{3. Incremental Budget Tracking}
+
+Each node tracks remaining budget to avoid recalculation:
+\begin{itemize}
+    \item Parent budget - (quantity × price)
+    \item Constant-time budget feasibility checks
+\end{itemize}
+
+\subsection{4. Cached Contribution Values}
+
+The makespan contribution $C_{\max}^{\text{LPT},(d)}(x_1, \ldots, x_d)$ from decided items is computed incrementally:
+\begin{itemize}
+    \item When generating a child node at depth $d+1$, we update the machine loads by adding the $x_{d+1}$ jobs of duration $d_{d+1}$ using the LPT rule
+    \item This incremental update avoids recomputing the entire schedule from scratch at each node
+    \item Reduces complexity from $O(d \cdot J)$ to $O(x_{d+1} \log m)$ per node expansion
+\end{itemize}
+
+\section{Logging and Metrics}
+
+Comprehensive logging tracks:
+\begin{itemize}
+    \item Node visits and evaluations
+    \item Incumbent updates
+    \item Pruning events (by reason)
+    \item Bound computations
+    \item Runtime statistics
+\end{itemize}
+
+Example log entry (JSON format):
+\begin{lstlisting}
+{
+  "event": "node_pruned",
+  "reason": "bound_dominated",
+  "depth": 5,
+  "bound": 42.0,
+  "incumbent": 45.0,
+  "timestamp": 1.234
+}
+\end{lstlisting}
+
+\section{Testing and Verification}
+
+\subsection{Correctness Verification}
+
+For small instances, we verify branch-and-bound against complete enumeration:
+\begin{itemize}
+    \item 10 small instances (4-5 jobs, 2-4 machines)
+    \item All solutions match enumeration exactly
+    \item 100\% verification rate
+\end{itemize}
+
+\subsection{Bound Tightness Testing}
+
+We validate that upper bounds are indeed optimistic:
+\begin{itemize}
+    \item For every evaluated node: $\text{UB}(x) \geq C_{\max}(x)$
+    \item No false pruning detected
+\end{itemize}
+
+\subsection{Performance Benchmarking}
+
+We compare against:
+\begin{itemize}
+    \item Complete enumeration (for small instances)
+    \item Gurobi MIP solver for scheduling subproblems
+    \item Pure knapsack heuristics
+\end{itemize}
+
+\section{Code Example: Bound Computation}
+
+\lstinputlisting[
+    caption={Excerpt from bound computation code},
+    label={lst:bound-code},
+    firstline=1,
+    lastline=20
+]{code/bound_computation_example.py}
