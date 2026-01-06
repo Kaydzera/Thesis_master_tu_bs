@@ -148,6 +148,12 @@ The five generation patterns are:
 
 All instances were generated with a fixed random seed (42) for reproducibility. Instance naming follows the convention: Complex\_XXX\_JY\_MZ\_B\#\# (where XXX = ID, Y = jobs, Z = machines, \#\# = budget).
 
+\textbf{Algorithm limits:}
+\begin{itemize}
+    \item Branch-and-bound node limit: 100,000 nodes
+    \item Enumeration verification timeout: 3,600 seconds (1 hour)
+\end{itemize}
+
 \subsection{Performance Results}
 
 \begin{table}[h]
@@ -199,6 +205,13 @@ Speedup (verified) & 2,847× (geom. mean) & 1.2×--1,017,898× \\
 
 To understand how budget availability affects algorithm performance, we conducted a systematic sensitivity analysis varying the budget multiplier from 1.2× to 6.2× the base level. Each configuration was tested with 5 repetitions using 8 job types and 4 machines.
 
+\textbf{Algorithm limits:}
+\begin{itemize}
+    \item Branch-and-bound node limit: 500,000 nodes
+    \item Time limit per instance: 300 seconds (5 minutes)
+    \item Stopping threshold: Testing stopped when first instance reached 300 seconds
+\end{itemize}
+
 \begin{table}[h]
 \centering
 \caption{Sensitivity analysis: Budget multiplier (selected values)}
@@ -222,7 +235,6 @@ Budget Mult. & Avg. Runtime (s) & Nodes Explored & Pruning Rate & Avg. Makespan 
 
 \textbf{Key observations:}
 \begin{itemize}
-    \item \textbf{Sweet spot:} Budget multiplier of 1.4× achieves fastest runtime (0.08s) with highest pruning rate (89.3\%)
     \item \textbf{Variability:} Runtime ranges from 0.08s to 102s, with most instances completing within 10s
     \item \textbf{Pruning effectiveness:} Consistently high across all budget levels (78-94\%)
     \item \textbf{Hardest case:} Budget 6.2× resulted in one instance taking 504s (approaching practical limits)
@@ -232,6 +244,12 @@ Budget Mult. & Avg. Runtime (s) & Nodes Explored & Pruning Rate & Avg. Makespan 
 \section{Sensitivity Analysis: Number of Job Types}
 
 We systematically varied the number of job types from 4 to 18 while keeping machines at 4 and budget multiplier at 2.0×. This tests the algorithm's ability to scale with problem dimensionality.
+
+\textbf{Algorithm limits:}
+\begin{itemize}
+    \item Branch-and-bound node limit: 500,000 nodes
+    \item Time limit per instance: 300 seconds (5 minutes)
+\end{itemize}
 
 \begin{table}[h]
 \centering
@@ -265,6 +283,12 @@ Job Types & Avg. Runtime (s) & Nodes Explored & Pruning Rate & Avg. Makespan & S
 \section{Sensitivity Analysis: Number of Machines}
 
 We tested algorithm performance with 2 to 10 machines while holding job types at 8 and budget multiplier at 2.0×. This reveals a counter-intuitive finding about problem difficulty.
+
+\textbf{Algorithm limits:}
+\begin{itemize}
+    \item Branch-and-bound node limit: 500,000 nodes
+    \item Time limit per instance: 300 seconds (5 minutes)
+\end{itemize}
 
 \begin{table}[h]
 \centering
