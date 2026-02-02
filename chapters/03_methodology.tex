@@ -492,3 +492,35 @@ The unbounded knapsack DP tables computed before start from item type $1$ up to 
 In total, we have to compute n DP tables, one for each possible depth in the tree. Each DP table requires O((n-d)B) time to compute.
 This is computationally more expensive than our previous upper bound, which only required a single DP table computed once before the branch and bound traversal. 
 We compare both upper bounds experimentally in Chapter~\ref{sec:experiments} to evaluate the trade-off between tighter bounds and computational overhead.
+
+\subsection{Modified Branch-and-Bound with Max-LPT Upper Bound}
+
+To use the Max-LPT approach as an alternative upper bound in the branch-and-bound algorithm, we modify the bounding step as shown in Algorithm~\ref{alg:bnb-maxlpt}. The key difference from Algorithm~\ref{alg:bnb} is that instead of computing the upper bound using the ceiling knapsack relaxation (equation~\eqref{eq:ub}), we call the Max-LPT algorithm on the remaining item types with the remaining budget. This requires precomputing a separate DP table for each depth level, as the set of remaining items changes as we descend the tree.
+
+\begin{algorithm}
+\caption{Branch-and-Bound with Max-LPT Upper Bound}
+\label{alg:bnb-maxlpt}
+\begin{algorithmic}[1]
+\State Precompute DP tables $DP_d$ for each depth $d=1, \ldots, n$
+\State Initialize: $(x^*, C_{\max}^*) \gets$ Max-LPT solution, queue $Q \gets \{$root node$\}$
+\While{$Q \neq \emptyset$}
+    \State $x \gets Q.\text{pop}()$ \Comment{Node with partial solution at depth $d$}
+    \If{$x$ is complete solution}
+        \State Solve follower's problem: $C_{\max}(x)$
+        \If{$C_{\max}(x) > C_{\max}^*$}
+            \State $C_{\max}^* \gets C_{\max}(x)$, $x^* \gets x$ \Comment{Update incumbent}
+        \EndIf
+    \Else
+        \State Compute $B_{\text{rem}} \gets B - \sum_{i=1}^{d} p_i x_i$ \Comment{Remaining budget}
+        \State Compute $C_{\max}^{\text{LPT},(d)} \gets$ LPT makespan for items $1, \ldots, d$
+        \State Compute $\text{UB}_{\text{Max-LPT}} \gets C_{\max}^{\text{LPT},(d)} +$ Max-LPT$(d+1, \ldots, n, B_{\text{rem}}, DP_d)$
+        \If{$\text{UB}_{\text{Max-LPT}} \leq C_{\max}^*$}
+            \State \textbf{continue} \Comment{Prune: bound dominated}
+        \EndIf
+        \State Generate children by branching on next item
+        \State Add feasible children to $Q$
+    \EndIf
+\EndWhile
+\State \Return $(x^*, C_{\max}^*)$
+\end{algorithmic}
+\end{algorithm}
