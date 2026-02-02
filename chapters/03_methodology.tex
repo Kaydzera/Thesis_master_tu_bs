@@ -356,13 +356,23 @@ This proves the claim.
 \end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:maxlpt-approx}]
-We apply Theorem~\ref{thm:approx-bilevel} to our knapsack-scheduling problem. The LPT rule is known to be a $\frac{4}{3}$-approximation algorithm for the makespan minimization problem on parallel machines. By Lemma~\ref{lem:approx-properties}, this means that for any job selection $x$, the optimal makespan satisfies $\frac{4}{3} \cdot C_{\max}^{\text{OPT}}(x) \geq C_{\max}^{\text{LPT}}(x)$.
+We apply Theorem~\ref{thm:approx-bilevel} to our knapsack-scheduling problem. The LPT rule is known to be a $\frac{4}{3}$-approximation algorithm for the makespan minimization problem on parallel machines. 
+By Lemma~\ref{lem:approx-properties}, this means that for any job selection $x$ and $\beta = \frac{3}{4}$, we get:
 
-Now, let $\hat{x}$ be the solution that maximizes the LPT makespan, i.e., $\hat{x}$ solves the Max-LPT problem. Since the leader seeks to maximize (not minimize) makespan, we adapt Theorem~\ref{thm:approx-bilevel} to the maximization setting. The optimal solution $x^*$ maximizes the optimal makespan, and we have:
 \[
-C_{\max}^{\text{LPT}}(\hat{x}) \geq C_{\max}^{\text{LPT}}(x^*) \geq \frac{3}{4} \cdot C_{\max}^{\text{OPT}}(x^*) = \frac{3}{4} \cdot C_{\max}^{\text{OPT}},
+\frac{3}{4} \cdot \mathrm{Opt} \le \frac{3}{4} \cdot C_{\max}^{\text{LPT}}(\hat{x}) \le \mathrm{Opt} \le C_{\max}^{\text{LPT}}(\hat{x})
 \]
-where the second inequality follows from the $\frac{4}{3}$-approximation guarantee of LPT (equivalently, $C_{\max}^{\text{OPT}} \leq \frac{4}{3} \cdot C_{\max}^{\text{LPT}}$, which gives $C_{\max}^{\text{LPT}} \geq \frac{3}{4} \cdot C_{\max}^{\text{OPT}}$).
+
+By that, we fulfill the conditions of Theorem~\ref{thm:approx-bilevel}.
+
+Now, let $\hat{x}$ be the solution that maximizes the LPT makespan, i.e., $\hat{x}$ solves the Max-LPT problem. Applying Theorem~\ref{thm:approx-bilevel} with $\beta = \frac{3}{4}$, we obtain:
+\begin{equation*}
+\frac{3}{4} \cdot C_{\max}^{\text{OPT}} \leq C_{\max}^{\text{OPT}}(\hat{x}) \leq C_{\max}^{\text{OPT}}.
+\end{equation*}
+Since $\hat{x}$ maximizes the LPT makespan, we have $C_{\max}^{\text{LPT}} = C_{\max}^{\text{LPT}}(\hat{x})$, and therefore:
+\begin{equation*}
+C_{\max}^{\text{LPT}} \geq \frac{3}{4} \cdot C_{\max}^{\text{OPT}}.
+\end{equation*}
 \end{proof}
 
 This result is significant because it guarantees that solving the Max-LPT problem provides a constant-factor approximation for the harder problem of finding the optimal job selection under optimal scheduling. Moreover, as we will show next, the Max-LPT problem can be solved optimally in pseudo-polynomial time.
