@@ -259,7 +259,7 @@ Since item types are presorted from longest to shortest duration, the algorithm 
 
 \section{Another Upper Bound: Maximizing the LPT Rule}
 
-While the branch-and-bound algorithm explores the search space systematically with pruning, we now present an alternative approach that directly maximizes the LPT makespan. This algorithm provides another method to solve the knapsack-scheduling problem, and we will later compare both approaches experimentally in Chapter~\ref{sec:experiments}.
+While the branch-and-bound algorithm uses the LPT rule to model the follower's scheduling behavior, we can exploit this connection to derive tighter bounds and better initial solutions. Since maximizing the LPT makespan provides a provably good approximation to the leader's optimal solution, we can use this approach in two ways: first, solving the Max-LPT problem before starting the branch-and-bound algorithm yields a strong initial incumbent; second, applying the Max-LPT approach at each node in the search tree provides an alternative upper bound for pruning. We will compare the computational trade-offs between different bounding strategies experimentally in Chapter~\ref{sec:experiments}.
 
 \subsection{The Max-LPT Problem}
 
