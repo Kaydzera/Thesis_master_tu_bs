@@ -5,8 +5,7 @@
 
 \section{Bilevel Optimization Framework}
 
-A bilevel optimization problem has a hierarchical structure with two decision-makers:
-
+A bilevel optimization problem has a hierarchical structure with two decision-makers.
 \begin{definition}[Bilevel Optimization Problem]
 \label{def:bilevel}
 \begin{align}
@@ -16,12 +15,9 @@ A bilevel optimization problem has a hierarchical structure with two decision-ma
 \end{align}
 \end{definition}
 
-\begin{note}
-This general framework encompasses a wide range of hierarchical optimization problems. Additional theoretical aspects, such as solution existence, uniqueness conditions, and computational complexity classes, may be discussed in future extensions of this work.
-\end{note}
+The leader chooses $x$ to optimize their objective $F$, anticipating that the follower will respond by solving their own optimization problem to find $y^*(x)$.  For more information, see~\cite{kleinert2021survey} for a survey on the field of bilevel optimization, and~\cite{dempe2020bilevel} for a comprehensive mathematical foundation.
 
-The leader chooses $x$ to optimize their objective $F$, anticipating that the follower will respond by solving their own optimization problem to find $y^*(x)$.
-
+\textbf{Optimistic vs. Pessimistic Formulation:} When the follower's problem has multiple optimal solutions, the \emph{optimistic formulation} assumes the follower selects the solution most favorable to the leader, while the \emph{pessimistic formulation} assumes the least favorable choice. The above formulation implies the optimistic case.
 \section{The Knapsack-Scheduling Problem}
 
 \subsection{Problem Data}
@@ -68,32 +64,40 @@ where $L_k$ denotes the load on machine $k$, defined as the total processing tim
 
 \section{Complete Bilevel Formulation}
 
+We present a mixed-integer linear programming (MILP) formulation compatible with standard bilevel solvers such as MibS~\cite{fischetti2016intersection}. The formulation uses a shared makespan variable $C_{\max}$ that appears in both levels:
+
 \begin{align}
-\max_{x \in \mathbb{Z}_+^n} \quad & C_{\max}^*(x) \label{eq:leader-obj}\\
+\max_{x, C_{\max}} \quad & C_{\max} \label{eq:leader-obj}\\
 \text{s.t.} \quad & \sum_{i=1}^{n} p_i x_i \leq B \label{eq:budget}\\
-\text{where } C_{\max}^*(x) = \quad & \min_{y} \max_{k=1}^{m} \sum_{i=1}^{n} \sum_{j=1}^{x_i} d_i \cdot y_{ijk} \label{eq:follower-obj}\\
-\text{s.t.} \quad & \sum_{k=1}^{m} y_{ijk} = 1 \quad \forall i, j \label{eq:assign}\\
-& y_{ijk} \in \{0, 1\} \quad \forall i, j, k \nonumber
+& x_i \in \mathbb{Z}_+ \quad \forall i \in \{1, \ldots, n\} \nonumber\\[1ex]
+\text{where } C_{\max} \in \quad & \arg\min_{y, C_{\max}} \quad C_{\max} \label{eq:follower-obj}\\
+\text{s.t.} \quad & \sum_{k=1}^{m} y_{ik} = x_i \quad \forall i \in \{1, \ldots, n\} \label{eq:assign}\\
+& C_{\max} \geq \sum_{i=1}^{n} d_i \cdot y_{ik} \quad \forall k \in \{1, \ldots, m\} \label{eq:makespan}\\
+& y_{ik} \in \mathbb{Z}_+ \quad \forall i, k \nonumber
 \end{align}
 
-Here, $y_{ijk} = 1$ if copy $j$ of job type $i$ is assigned to machine $k$.
+The leader's variables are $x_i$ (number of jobs of type $i$ to select) and the follower's variables are $y_{ik}$ (number of jobs of type $i$ assigned to machine $k$). The shared variable $C_{\max}$ represents the makespan: the leader seeks to maximize it while the follower seeks to minimize it, creating the adversarial nature of the problem.
 
 \section{Problem Characteristics}
 
-\begin{itemize}
-    \item \textbf{Complexity:} The problem is NP-hard, combining two NP-hard problems (knapsack and scheduling)
-    \item \textbf{Non-convexity:} The follower's optimal value function $C_{\max}^*(x)$ is non-convex and discontinuous
-    \item \textbf{Discrete bilevel:} Cannot use KKT conditions (only valid for continuous problems)
-    \item \textbf{Combinatorial approach needed:} Must explore discrete solution space
-\end{itemize}
+The computational challenge of this problem arises from multiple sources. First, the problem combines two NP-hard problems (knapsack and scheduling) in a bilevel scenario. Bilevel optimization is well-known to be computationally challenging even for simple problems with linear objectives and constraints, making our discrete, non-convex variant particularly difficult to solve. The follower's optimal value function $C_{\max}^*(x)$ is non-convex and discontinuous, which prevents the use of gradient-based methods and complicates the analysis of the leader's objective landscape. Furthermore, the discrete nature of both levels means that standard continuous optimization techniques, such as KKT conditions, cannot be applied. Consequently, solving this problem requires combinatorial methods that explicitly explore the discrete solution space.
 
 \section{Interpretation: Why Maximize Makespan?}
 
-The leader maximizes makespan to ensure robust system capacity. This models scenarios where:
-\begin{itemize}
-    \item The leader wants to stresstest the system capacity
-    \item The follower (scheduler) will always try to minimize completion time by finding an optimal schedule
-    \item Models adversarial or worst-case planning
-\end{itemize}
+The leader maximizes makespan to identify the worst-case completion time that could arise within the budget constraint. This defensive approach models robust planning under uncertainty, where the decision-maker seeks to understand the maximum possible makespan that could result from any job selection, even when the scheduler optimizes to minimize completion time. By solving for this worst-case bound, the leader can make informed decisions about resource provisioning, capacity planning, and service level guarantees. More generally, this framework applies to any adversarial or worst-case planning scenario where a decision-maker must prepare for unfavorable conditions while an opposing agent optimizes in their own interest.
 
-\textbf{Example:} A production manager selects job types (leader) knowing that a scheduler will minimize completion time (follower). The manager wants to maximize the workload the system can handle.
+\textbf{Example:} A production facility manager needs to determine what workload the system must be prepared to handle. By identifying the job selection that maximizes makespan (under optimal scheduling), the manager obtains a worst-case guarantee: the system will never face a longer completion time than this bound, regardless of which specific jobs arrive within budget.
+
+\section{Literature Review}
+
+We provide a brief overview of selected works relevant to our problem; for a comprehensive treatment of bilevel optimization, we refer the reader to the extensive body of literature in this field. 
+
+Dempe and Zemkoho~\cite{dempe2020bilevel} provide a comprehensive mathematical foundation for bilevel optimization, covering theory, optimality conditions, and solution approaches. Kleinert et al.~\cite{kleinert2021survey} offer an extensive survey on mixed-integer programming techniques in bilevel optimization, reviewing branch-and-bound methods, cutting planes, and decomposition approaches that form the algorithmic foundation for modern bilevel solvers.
+
+On the algorithmic side, Fischetti et al.~\cite{fischetti2016intersection} introduced intersection cuts for bilevel optimization, developing the MibS (Mixed Integer Bilevel Solver) framework that extends MILP solvers to handle bilevel problems with minimal modifications. Their approach inherits the powerful arsenal of modern MILP tools including cutting planes, branching rules, and heuristics. In this thesis, we compare our specialized branch-and-bound algorithm against MibS to evaluate the benefits of problem-specific techniques versus general-purpose bilevel solvers. 
+
+Most relevant to our work, Weninger and Fukasawa~\cite{weninger2025bilevel} recently developed a fast combinatorial branch-and-bound algorithm for the bilevel knapsack problem with interdiction constraints. Their approach uses dynamic programming to compute strong lower bounds by solving a relaxed 2n-level version of the problem where items are processed in an online fashion. This technique shares similarities with our method, as both employ branch-and-bound combined with dynamic programming to exploit problem structure. However, their lower-level problem is a second knapsack optimization, whereas ours involves parallel machine scheduling, requiring different bounding techniques.
+
+Leitner et al.~\cite{leitner2023exact} further advanced the field by developing exact methods for three-level optimization problems (fortification games), demonstrating that problem-specific reformulations and specialized cuts can significantly outperform general approaches, solving instances with over 330,000 nodes to optimality.
+
+While the general bilevel optimization literature is extensive, our specific problem combining knapsack constraints in the upper level with parallel machine scheduling in the lower level represents a novel variant. The hierarchical structure with adversarial objectives (maximize vs. minimize makespan) distinguishes our problem from classical bilevel scheduling formulations, motivating the development of tailored solution methods that exploit the specific structure of the knapsack-scheduling problem.

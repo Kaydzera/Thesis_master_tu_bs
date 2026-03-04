@@ -50,7 +50,7 @@ Complete enumeration becomes infeasible rapidly:
 
 \textbf{1. Upper bound approximation:}
 \begin{itemize}
-    \item The upper bound computation uses the LPT rule (a $\frac{4}{3}$-approximation) for the $C_{\max}^{\text{LPT},(d)}$ term
+    \item The upper bound computation uses the LPT rule (a $\frac{4}{3}$-approximation~\cite{graham1969bounds}) for the $C_{\max}^{\text{LPT},(d)}$ term
     \item This may slightly overestimate the true contribution from decided items
     \item However, the follower's scheduling problem is solved optimally via integer programming (Gurobi)
     \item The approximation only affects bound tightness, not solution optimality

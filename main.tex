@@ -216,14 +216,15 @@ Scheduling with Adversarial Job Selection}
         \clearpage\pagenumbering{arabic}
     }
 
-    \makeatletter
-    \let\orig@appendix\appendix
-    \renewcommand{\appendix}{%
-    \clearpage
-    \orig@appendix
-    \pagenumbering{Roman}%
-    }
-    \makeatother
+    % Appendix redefinition commented out - was causing chapters to be numbered as appendices
+    % \makeatletter
+    % \let\orig@appendix\appendix
+    % \renewcommand{\appendix}{%
+    % \clearpage
+    % \orig@appendix
+    % \pagenumbering{Roman}%
+    % }
+    % \makeatother
 }
 
 % ===================================================================================
