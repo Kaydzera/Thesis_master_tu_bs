@@ -271,7 +271,7 @@ While the branch-and-bound algorithm uses the LPT rule to model the follower's s
 
 \subsection{The Max-LPT Problem}
 
-Recall that the \textbf{Longest Processing Time (LPT) rule}~\cite{graham1969bounds} schedules jobs in decreasing order of their processing times, always assigning the next job to the machine with the smallest current load. This greedy rule is well-known to provide good makespan approximations for parallel machine scheduling.
+Recall that the \textbf{Longest Processing Time (LPT) rule}~\cite{graham1969bounds} schedules jobs in decreasing order of their processing times, always assigning the next job to the machine with the smallest current load. This greedy rule is well-known to provide good makespan approximations for parallel machine scheduling. We will confirm these observations in our computational experiments, where we find that the LPT rule often yields optimal or near-optimal solutions for the follower's scheduling problem.
 
 We now define the \textbf{Max-LPT problem} as follows:
 
@@ -363,8 +363,7 @@ c\bigl(\hat{x}, y^*(\hat{x})\bigr).
 This proves the claim.
 \end{proof}
 
-\textbf{Remark:} The proof above follows the approach of~\cite{weninger2025bilevel}, who proved an analogous result for bilevel min-max problems. While their setting considers minimization in the upper level and maximization in the lower level, the proof structure is practically identical to our max-min case, with the inequality directions appropriately reversed.
-
+\textbf{Remark:} The proof above follows the approach of~\cite{weninger2025bilevel}, who proved an analogous result for bilevel min-max problems. While their setting considers minimization in the upper level and maximization in the lower level, their arguments are basically identical.
 \begin{proof}[Proof of Theorem~\ref{thm:maxlpt-approx}]
 We apply Theorem~\ref{thm:approx-bilevel} to our knapsack-scheduling problem. The LPT rule is known to be a $\frac{4}{3}$-approximation algorithm for the makespan minimization problem on parallel machines. 
 By Lemma~\ref{lem:approx-properties}, this means that for any job selection $x$ and $\beta = \frac{3}{4}$, we get:
@@ -464,7 +463,8 @@ We begin with the key observation:
 In an optimal solution of the max-LPT problem, the job $I$ that finishes last is assigned to the machine with the shortest total processing time $C_{\max}^{(m)}$ at that moment. Therefore, the makespan is determined by the duration of this final job $d_I$ together with $C_{\max}^{(m)}$ at that moment.
 Since we assume to have an optimal solution, there cannot be a combination of jobs so that the LPT rule would deliver a larger $C_{\max}^{(m)}$ for the unbounded knapsack subproblem that maximizes $C_{\max}^{(m)}$ with reduced budget (by how much, we will explore in the following) and job types $1, \ldots, I$ available.
 Otherwise, we could replace the combination of jobs in the optimal solution before putting $I$ on the least loaded machine with the combination that maximizes $C_{\max}^{(m)}$ and then place item $I$ on the least loaded machine, which contradicts the optimality of the solution.
-We exploit this property by considering each item type $J$ as a candidate for the job that finishes last. For a fixed candidate $J$, we maximize the makespan of the remaining jobs under the remaining budget.
+This means that all we need to do is maximize $C_{\max}^{(m)}$ for the unbounded knapsack subproblem with budget $B - p_I$ for all job types $1, \ldots, I$ available for each candidate $I$ for the last job.
+We exploit this property by considering each item type $J$ as a candidate for the job that finishes last. For a fixed candidate $J$, we maximize the $C_{\max}^{(m)}$ for the remaining jobs under the remaining budget.
 
 Let
 \[
@@ -476,19 +476,18 @@ be the budget that can be allocated to each machine if the total budget is distr
 \]
 be the remaining budget.
 
-\textbf{Connection to unbounded knapsack:} By allocating budget $B_i$ to each machine, we seek the combination of job types that maximizes the total duration (load) on each machine given this budget constraint. This is precisely the unbounded knapsack problem: maximize $\sum_{i=1}^{J} d_i x_i$ subject to $\sum_{i=1}^{J} p_i x_i \leq B_i$, where we can select multiple copies of each job type. The dynamic programming table $DP(J, B_i)$ stores the optimal value of this knapsack problem, i.e., the maximum load achievable on a single machine with budget $B_i$ using job types $1, \ldots, J$. Since the LPT rule places the last job of type $J$ on the least loaded machine, maximizing the load on all machines before this placement corresponds to maximizing $C_{\max}^{(m)}$, the minimum machine load at that moment.
+If $\hat{B} \ge p_J$, the final job of type $J$ can be paid without reducing the per-machine budget. This corresponds to the case where no adjustment is needed in the algorithm. In this case, the optimal combination of jobs scheduled before $J$ is given by the unbounded knapsack solution stored in $DP(J, B_i)$. 
+This follows because we evenly distribute the budget across all machines, thus maximizing the budget the least loaded machine has on its disposal. Given this Budget and items $1, \ldots, J$, we seek the combination of items that maximizes the sum of durations on each machine. This is equivalent to solving the unbounded knapsack problem with the dynamic programming table $DP(J, B_i)$, which stores the optimal value of this knapsack problem for item types $1, \ldots, J$ and budget $B_i$. Adding the duration of the final job $d_J$ gives us the total makespan for this candidate solution.
 
-If $\hat{B} \ge p_J$, the final job of type $J$ can be paid without reducing the per-machine budget. In this case, the optimal combination of jobs scheduled before $J$ is given by the unbounded knapsack solution stored in $DP(J, B_i)$. This corresponds to the case where no adjustment is needed in the algorithm.
-
-If $\hat{B} < p_J$, the per-machine budget $B_i$ must be reduced uniformly until the remaining budget is sufficiently large to pay for item $J$. After this adjustment, the optimal combination of jobs scheduled before $J$ is again obtained from the dynamic programming table $DP(J, B_i)$. This corresponds to the adjustment loop in the algorithm.
+If $\hat{B} < p_J$, the per-machine budget $B_i$ must be reduced uniformly until the remaining budget is large enough to pay for item $J$. After this adjustment, the optimal combination of jobs scheduled before $J$ is again obtained from the dynamic programming table $DP(J, B_i)$. This corresponds to the adjustment loop in the algorithm.
 
 Since the algorithm evaluates all item types as possible final jobs and, for each of them, computes the optimal preceding schedule, it considers all candidates for an optimal solution. By selecting the maximum makespan among these candidates, the algorithm returns an optimal solution to the max-LPT problem.
 \end{proof}
 
-\subsection{Connection to Knapsack-Scheduling Problem}
+\subsection{Connection to the Knapsack-Scheduling Problem}
 
 The max-LPT algorithm provides a good approximation to the leader's problem by maximizing the makespan under the LPT scheduling rule. While the LPT rule is itself an approximation for optimal scheduling, this algorithm finds the \emph{optimal} job selection that maximizes the LPT makespan. 
-We have already shown that this approach yields a $\frac{3}{4}$-approximation for the original knapsack-scheduling problem (Section~\ref{sec:formulation}). If we solve the max-LPT problem before calling the branch and bound Algorithm we use to obtain an optimal solution to the bilevel knapsack-scheduling problem, we obtain a starting incumbent that is guaranteed to be within $\frac{3}{4}$ of the optimal solution. 
+We have already shown that this approach yields a $\frac{3}{4}$-approximation for the original knapsack-scheduling problem (Section~\ref{sec:formulation}). If we solve the max-LPT problem before calling the branch and bound Algorithm of the bilevel knapsack program, we obtain a starting incumbent that is guaranteed to be within $\frac{3}{4}$ of the optimal solution. 
 In the branch and bound algorithm itself, we can use the max-LPT algorithm to compute upper bounds at each node by evaluating the max-LPT solution for the remaining budget and item types. This provides an upper bound with a $\frac{3}{4}$-approximation guarantee, which is better than the upper bound we used before. 
 The disadvantage of this approach is that we have to compute the unbounded knapsack DP table for each depth d in the branch and bound tree, since the remaining item types change at each depth:
 In the max-LPT algorithm, we need to solve the unbounded knapsack problem for the remaining item types $d+1, \ldots, n$ at depth $d$.
