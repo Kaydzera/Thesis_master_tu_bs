@@ -38,33 +38,27 @@ for bound, col, status_col in [
     print(f'    title={{Runtime vs. Job Types, {bound} Bound, Normal Scale}},')
     print(r'  ]')
     print(r'    \addplot+[scatter, scatter src=explicit, mark=*,] coordinates {')
-    for _, row in df.iterrows():
-        print(f'      ({row["n_jobs"]}, {row[col]}, {row["m_machines"]})')
-    print(r'    };')
-    print(r'  \end{axis}')
-    print(r'\end{tikzpicture}\vspace{1em}')
-    # Logarithmic scale plot
-    print(f'% Scatter plot for {bound} bound (log scale, color = machines)')
+    # Single log-scale scatter plot with explicit point meta for machines
+    print(f'% PGFPlots scatter plot for {bound} bound (log scale, color = machines)')
     print(r'\begin{tikzpicture}')
     print(r'  \begin{axis}[')
     print(r'    xlabel={Number of Job Types},')
     print(r'    ylabel={Runtime (s)},')
     print(r'    ymode=log,')
-    print(r'    colorbar,')
-    print(r'    colormap/viridis,')
+    print(r'    log basis y=10,')
     print(r'    scatter,')
     print(r'    only marks,')
-    print(r'    point meta=explicit symbolic,')
-    print(f'    title={{Runtime vs. Job Types, {bound} Bound, Log Scale}},')
+    print(r'    colorbar,')
+    print(r'    colormap/viridis,')
+    print(r'    point meta=explicit,')
+    print(r'    point meta min=2,')
+    print(r'    point meta max=12,')
+    print(r'    colorbar style={title=Machines},')
     print(r'  ]')
-    print(r'    \addplot+[scatter, scatter src=explicit, mark=*,] coordinates {')
+    print(r'    \addplot+[scatter, scatter src=explicit, mark=*] coordinates {')
     for _, row in df.iterrows():
-        print(f'      ({row["n_jobs"]}, {row[col]}, {row["m_machines"]})')
+        print(f'      ({row["n_jobs"]}, {row[col]}) [{row["m_machines"]}]')
     print(r'    };')
     print(r'  \end{axis}')
-    print(r'\end{tikzpicture}\vspace{1em}')
-
-# --- PGFPlots colormap explanation ---
-# Here, color encodes the number of machines. The colorbar shows the mapping.
-# Timeout and leaf_timeout values are mapped to a fixed high value (e.g., 4000) so they appear at the top of the plot.
-# You get one plot with normal y scale and one with log y scale for each bound.
+    print(r'\end{tikzpicture}')
+    print(r'  \end{axis}')

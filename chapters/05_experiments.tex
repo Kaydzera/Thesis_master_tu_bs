@@ -414,10 +414,125 @@ Since no branching occurs, the computational cost is dominated by the computatat
 
 
 \section{Difficulty Analysis by Parameter Configuration}
-To understand how different parameter configurations affect the difficulty of instances, we analyzed the distribution of solution statuses (root optimal, completed, timeout, leaf timeout) across the grid sensitivity instances for each combination of job types and machines. This analysis helps identify which configurations are more likely to lead to harder instances that require branching and deeper search.
+To comprehend how the difficulty scales when altering the nuber of job types and machines, we present a scatter plot of the MaxLPT bound runtimes on a log scale, with color indicating the number of machines.
+
+We can see that generally the difficulty scales the same for both bounds. Lower numbers of job types and machines are easier, while higher numbers lead to more timeouts. The MaxLPT bound is more robust, with fewer timeouts at higher parameter values, but the overall trend is similar for both bounds. 
+This suggests that the underlying problem difficulty is primarily driven by the combinatorial explosion of possibilities as job types and machines increase, and while MaxLPT provides better pruning, it cannot fully mitigate the exponential growth in complexity.
+
+
+
+% PGFPlots scatter plot for MaxLPT bound (log scale, color = machines)
+\begin{tikzpicture}
+  \begin{axis}[
+    title={MaxLPT Bound Runtime}, % <-- add this line
+    xlabel={Number of Job Types},
+    ylabel={Runtime (s)},
+    ymode=log,
+    log basis y=10,
+    scatter,
+    only marks,
+    colorbar,
+    colormap/viridis,
+    point meta=explicit,
+    point meta min=2,
+    point meta max=12,
+    colorbar style={title=Machines},
+]
+\addplot+[scatter, scatter src=explicit, mark=*] coordinates {
+    (16, 0.0182) [2]
+    (16, 0.0105) [2]
+    (24, 0.0416) [2]
+    (24, 0.025) [2]
+    (12, 0.0988) [4]
+    (16, 0.0662) [4]
+    (24, 0.1248) [4]
+    (12, 1.3044) [6]
+    (16, 0.1286) [6]
+    (16, 10.6183) [6]
+    (20, 7.9195) [6]
+    (24, 6.8195) [6]
+    (24, 0.2759) [6]
+    (12, 11.1834) [8]
+    (20, 1.1375) [8]
+    (20, 33.3731) [8]
+    (24, 146.0864) [8]
+    (16, 27.9256) [10]
+    (16, 152.9347) [10]
+    (24, 5.5397) [10]
+    (24, 166.4686) [10]
+    (4, 1.1428) [12]
+    (8, 134.0008) [12]
+    (8, 9.0288) [12]
+    (16, 886.4828) [12]
+    (20, 419.6588) [12]
+    (8, 0.01) [2]
+    (20, 0.0485) [2]
+    (20, 0.0525) [2]
+    (24, 0.082) [2]
+    (12, 0.3205) [4]
+    (12, 0.6696) [4]
+    (20, 3.129) [4]
+    (20, 0.3225) [4]
+    (4, 0.1045) [6]
+    (16, 1.4428) [6]
+    (24, 25.2229) [6]
+    (12, 74.7526) [8]
+    (16, 15.0727) [8]
+    (16, 54.9436) [8]
+    (16, 54.5988) [8]
+    (20, 4000.0) [8]
+    (20, 356.9652) [8]
+    (8, 28.0501) [10]
+    (12, 4000.0) [10]
+    (12, 301.0861) [10]
+    (16, 2.8157) [10]
+    (16, 3.589) [10]
+    (16, 4000.0) [10]
+    (20, 27.9108) [10]
+    (24, 4000.0) [10]
+    (8, 4000.0) [12]
+    (12, 4000.0) [12]
+    (16, 59.3459) [12]
+    (16, 4000.0) [12]
+    (24, 4000.0) [12]
+    (12, 0.0465) [2]
+    (16, 0.091) [2]
+    (20, 0.1245) [2]
+    (24, 0.1695) [2]
+    (24, 0.189) [2]
+    (4, 0.1745) [4]
+    (16, 3.521) [4]
+    (20, 0.7055) [4]
+    (24, 13.8768) [4]
+    (4, 0.1813) [6]
+    (8, 62.798) [6]
+    (8, 738.8477) [6]
+    (8, 0.3796) [6]
+    (12, 8.4563) [6]
+    (16, 121.6772) [6]
+    (16, 11.6554) [6]
+    (20, 12.1949) [6]
+    (24, 23.868) [6]
+    (4, 2.0159) [8]
+    (4, 6.7873) [8]
+    (24, 812.5187) [8]
+    (4, 0.5461) [10]
+    (20, 4000.0) [10]
+    (20, 372.8375) [10]
+    (24, 4000.0) [10]
+    (24, 4000.0) [10]
+    (16, 4000.0) [12]
+};
+\end{axis}
+\end{tikzpicture}
+
+
+
+
 
 \begin{tikzpicture}
   \begin{axis}[
+    title={Ceiling Bound Runtime}, % <-- add this line
     xlabel={Number of Job Types},
     ylabel={Runtime (s)},
     ymode=log,
@@ -524,20 +639,73 @@ To understand how different parameter configurations affect the difficulty of in
 
 \subsection{MIBS Background}
 
-MIBS (Mixed-Integer Bilevel Solver) is a state-of-the-art open-source solver for bilevel mixed-integer linear programs developed by researchers at Lehigh University. It implements branch-and-cut techniques with specialized bilevel handling. We selected a subset of our grid instances for comparison to benchmark our specialized algorithm against a general-purpose bilevel solver.
+MIBS (Mixed-Integer Bilevel Solver) is a state-of-the-art open-source solver for bilevel mixed-integer linear programs 
+developed by Tahernejad, Ralphs, and DeNegre~\cite{Tahernejad2020}. It implements branch-and-cut techniques with specialized bilevel handling. We selected a subset of our grid instances for comparison to benchmark our specialized algorithm against a general-purpose bilevel solver.
 
 \subsection{Experimental Design}
 
-Due to MIBS's significantly longer runtime, we limited the comparison to a representative sample:
+To provide a comprehensive and fair comparison, we testet the mibs solver on a representative subset of our grid sensitivity instances. We selected instances with varying numbers of machines and job types, as well as different budget multipliers, to capture a range of difficulty levels.
 \begin{itemize}
-    \item \textbf{Instances:} 2 machines with 4--24 jobs, budget multiplier 2.5 (30 instances)
-    \item \textbf{Additional:} Selected 4-machine instances (15 instances)
-    \item \textbf{Total:} 45 instances
+    \item \textbf{Instances:} All combinations of 4, 8, and 12 machines with 4, 8, 16, and 20 job types
+    \item \textbf{Budget multipliers:} 1.3, 2.5, and 5.0 (separate experiments for each multiplier)
+    \item \textbf{Repetitions:} 5 random seeds per configuration, same as in the grid sensitivity analysis
+    \item \textbf{Total:} $3 \text{ (machines)} \times 4 \text{ (job types)} \times 3 \text{ (multipliers)} \times 5 \text{ (seeds)} = 180$ instances
     \item \textbf{Time limit:} 3,600 seconds (1 hour) per instance
     \item \textbf{Comparison metrics:} Runtime, nodes explored, solution quality
 \end{itemize}
+This design allows us to systematically evaluate both solvers across a broad spectrum of problem sizes and difficulty levels, and to evaluate performance of our approach against a general-purpose bilevel solver.
 
 \subsection{Results}
+
+Out of the 180 instances tested, the MIBS failed to solve 145 instances within the same limit. 
+For the instances that MIBS solved successfully, the table \ref{tab:mibs-success-grid} summarizes the number of successful solves by MIBS for each combination of machines $m$ and job types $j$, aggregated across all budget multipliers.
+\begin{table}[htbp]
+\centering
+\caption{MIBS solver successes by machines $m$ and job types $j$ (all budget multipliers)}
+\label{tab:mibs-success-grid}
+\begin{tabular}{c|cccc}
+\toprule
+$m$ $\backslash$ $j$ & 4 & 8 & 16 & 20 \\
+\midrule
+4 & 15/15 & 8/15 & 2/15 & 1/15 \\
+8 & 5/15 & 0/15 & 0/15 & 1/15 \\
+12 & 2/15 & 0/15 & 0/15 & 0/15 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We can conclude that MIBS performs reasonably well on smaller instances (4 machines, 4 job types), but struggles significantly as the problem size increases, particularly with more job types. In contrast, our specialized branch-and-bound algorithm 
+successfully solved all 180 instances within the time limit, demonstrating its superior scalability and efficiency for this specific bilevel scheduling problem.
+
+\paragraph{Detailed runtime comparison.}
+To quantify the performance gap, we matched all 180 test instances between MIBS and our branch-and-bound approach (Ceiling and MaxLPT bounds) and captured Mean, Median, Min, Max, and Standard Deviation. For each instance, we compared runtimes, assigning 3,600 seconds for any timeout.
+
+\begin{itemize}
+    \item \textbf{Total matched instances:} 180
+    \item \textbf{Ceiling timeouts:} 5
+    \item \textbf{MaxLPT timeouts:} 1
+    \item \textbf{Ceiling speedup (MIBS $-$ Ceiling, seconds):}
+        \begin{itemize}
+            \item Mean: 2,876.6s
+            \item Median: 3,599.9s
+            \item Min: 0.0s
+            \item Max: 3,599.99s
+            \item Std: 1,342.8s
+        \end{itemize}
+    \item \textbf{MaxLPT speedup (MIBS $-$ MaxLPT, seconds):}
+        \begin{itemize}
+            \item Mean: 2,959.6s
+            \item Median: 3,599.5s
+            \item Min: 0.0s
+            \item Max: 3,599.98s
+            \item Std: 1,271.0s
+        \end{itemize}
+\end{itemize}
+
+These results show that both bounds are dramatically faster than MIBS, with MaxLPT slightly outperforming Ceiling in speed and robustness. The median speedup is nearly the full timeout limit, indicating that MIBS often fails where our approach succeeds in seconds. This confirms the practical advantage and scalability of the branch-and-bound algorithm for bilevel knapsack-scheduling.
+
+
+
 
 \begin{table}[htbp]
 \centering
