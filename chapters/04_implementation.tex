@@ -1,141 +1,95 @@
+
 \chapter{Implementation Details}
 \label{sec:implementation}
 
-% TODO: Write implementation section
-
 \section{Software Architecture}
 
-The implementation consists of several modular components:
-
+The implementation is modular, with key components for search, problem modeling, and scheduling:
 \begin{itemize}
-    \item \textbf{models.py:} Data structures for problems and search nodes
-    \item \textbf{bnb.py:} Branch-and-bound solver with pruning logic
-    \item \textbf{knapsack\_dp.py:} Dynamic programming solver for ceiling knapsack bounds
-    \item \textbf{solvers.py:} List scheduling and IP formulations for follower
-    \item \textbf{bilevel\_gurobi.py:} Complete enumeration baseline
-    \item \textbf{logger.py:} Comprehensive logging and metrics collection
+    \item \textbf{models.py:} Data structures for problem instances and search nodes
+    \item \textbf{bnb.py:} Branch-and-bound solver with pruning and search tree logic
+    \item \textbf{solvers.py:} Scheduling subproblems solved via Gurobi (integer programming)
+    \item \textbf{bilevel\_gurobi.py:} Complete enumeration baseline for correctness verification
 \end{itemize}
 
 \section{Key Data Structures}
 
 \subsection{Problem Node}
 
-Each node in the search tree maintains:
+
+Each node in the branch-and-bound search tree represents a partial or complete leader decision. The node tracks job selections, decision depth, remaining budget, and machine loads for efficient makespan evaluation. The implementation supports efficient branching and pruning:
 
 \begin{lstlisting}
 class ProblemNode:
-    job_occurrences: List[int]  # Quantities of each job type
-    depth: int                  # How many items decided
-    remaining_budget: float     # Budget left after decisions
-    _max_at_depth: float       # Cached contribution from decided items
-    _branch_type: str          # 'root', 'left', 'right', 'lower'
+    job_occurrences: List[int]    # Number of jobs selected for each job type
+    depth: int                    # Current decision depth (job type index)
+    remaining_budget: int         # Budget left after current selections
+    n_job_types: int              # Total number of job types
+    _machine_loads: List[float]   # Sorted list of loads on each machine (internal)
+    _branch_type: str             # 'root', 'right', 'left' (branching type)
+    _m: int                       # Number of machines
 \end{lstlisting}
 
-The cached value \texttt{\_max\_at\_depth} stores $\sum_{i=1}^{d} d_i \lceil x_i / m \rceil$ to avoid recomputation.
+\textbf{Branch types:}
+\begin{itemize}
+    \item \texttt{'root'}: Can create both left and right children; jobs at current depth are not yet distributed to machines.
+    \item \texttt{'right'}: Created by incrementing the current job type; jobs at depth are distributed incrementally to machines.
+    \item \texttt{'left'}: Created by decrementing the current job type; jobs at depth are not distributed, loads are copied unchanged.
+\end{itemize}
 
-\subsection{Ceiling Knapsack Solver}
+\textbf{Child creation logic:}
+\begin{itemize}
+    \item \texttt{'root'}: Can create left (if jobs at depth $>$ 0), right, and lower children.
+    \item \texttt{'right'}: Can create right and lower children.
+    \item \texttt{'left'}: Can create left and lower children (if jobs at depth $>$ 0).
+\end{itemize}
 
-Pre-computes DP table for efficient bound queries:
+\textbf{Machine load handling:}
+\begin{itemize}
+    \item For \texttt{'right'} branches, machine loads include jobs at current depth.
+    \item For \texttt{'root'} and \texttt{'left'} branches, jobs at depth are distributed to machines only when evaluating makespan or committing.
+\end{itemize}
 
-\begin{lstlisting}
-class CeilKnapsackSolver:
-    def __init__(self, costs, durations, m, max_budget):
-        # Build DP table: dp[i][b] = best value for items 0..i, budget b
-        # Items stored in REVERSED order for querying last k items
-        
-    def query(self, num_items, budget):
-        # Return best value using first num_items (last in original order)
-        return self.dp[num_items][budget]
-\end{lstlisting}
+The makespan contribution from committed jobs is incrementally tracked and updated using the internal machine load state. Each node distributes job occurrences to machines following the LPT rule, ensuring efficient evaluation without recomputation. This approach is computationally efficient and provides good approximate makespan values for partial leader decisions.
 
 \section{Algorithmic Optimizations}
 
-\subsection{1. Depth-First Search}
+\section{Search Tree Structure and Algorithmic Optimizations}
 
-We use a depth-first search strategy to explore the branch-and-bound tree:
+\subsection{Depth-First Search and Node Expansion}
+
+The branch-and-bound algorithm uses a depth-first search strategy:
 \begin{itemize}
-    \item Start with the heuristic solution to initialize the incumbent
-    \item Generate adjacent nodes (children) from the root
-    \item Prioritize lower children (nodes at greater depth) in the search order
-    \item Explore deeply into the tree before backtracking
-    \item Memory-efficient compared to breadth-first approaches
+    \item The search starts with a provably good incumbent solution, obtained by solving the MaxLPT problem.
+    \item At each node, children are generated corresponding to possible decisions for the next job type.
+    \item Left children correspond to decrementing the quantity of the current job type, while right children increment the quantity. Both directions are explored to cover all feasible allocations within the budget.
+    \item The search does not prioritize left or right children; all feasible branches are explored according to the branch-and-bound logic, ensuring optimality and efficient pruning.
+    \item At the leaf level, only a single leaf node is generated: the one that spends the most remaining budget and thus acquires the maximum number of jobs of type $n$. This is optimal, as any other leaf node with fewer jobs cannot yield a greater makespan.
+    \item This approach avoids unnecessary expansion of all possible leaf nodes, improving efficiency, since evaluating leaf nodes by solving the follower's scheduling problem is computationally expensive.
+    \item Memory usage is minimized compared to breadth-first approaches.
+    \item The depth-first strategy quickly evaluates complete solutions, which leads to early updates of the incumbent and more effective pruning of suboptimal branches.
 \end{itemize}
 
-\subsection{2. Heuristic Initialization}
+\subsection{Incumbent Initialization}
 
-We compute an initial incumbent solution in two stages:
-\begin{enumerate}
-    \item Solve a standard knapsack problem to maximize the sum of durations $\sum_i d_i x_i$ subject to the budget constraint $\sum_i p_i x_i \leq B$, without considering the scheduling aspect
-    \item Pass the resulting job selection to the scheduler, which solves the follower's scheduling problem optimally via integer programming
-\end{enumerate}
-This approach provides a strong starting solution by selecting jobs with high total duration, which the scheduler then arranges to achieve a large makespan.
-
-\subsection{3. Incremental Budget Tracking}
-
-Each node tracks remaining budget to avoid recalculation:
+The initial incumbent is computed by solving the MaxLPT relaxation:
 \begin{itemize}
-    \item Parent budget - (quantity × price)
-    \item Constant-time budget feasibility checks
+    \item The MaxLPT problem provides a provable upper bound and a feasible leader solution.
+    \item The resulting job selection is passed to the Gurobi scheduler, which solves the follower's scheduling problem optimally via integer programming.
+    \item This guarantees a strong starting incumbent and enables immediate pruning for many instances.
 \end{itemize}
 
-\subsection{4. Cached Contribution Values}
+\subsection{Incremental Budget and Contribution Tracking}
 
-The makespan contribution $C_{\max}^{\text{LPT},(d)}(x_1, \ldots, x_d)$ from decided items is computed incrementally:
+Each node tracks remaining budget and incremental makespan contributions:
 \begin{itemize}
-    \item When generating a child node at depth $d+1$, we update the machine loads by adding the $x_{d+1}$ jobs of duration $d_{d+1}$ using the LPT rule
-    \item This incremental update avoids recomputing the entire schedule from scratch at each node
-    \item Reduces complexity from $O(d \cdot J)$ to $O(x_{d+1} \log m)$ per node expansion
+    \item Remaining budget is updated in constant time from parent to child.
+    \item The makespan contribution from decided items is cached and updated incrementally, avoiding recomputation.
+    \item When generating a child node, machine loads are updated using the LPT rule, reducing complexity from $O(d \cdot J)$ to $O(x_{d+1} \log m)$ per node expansion.
 \end{itemize}
 
 \section{Logging and Metrics}
 
-Comprehensive logging tracks:
-\begin{itemize}
-    \item Node visits and evaluations
-    \item Incumbent updates
-    \item Pruning events (by reason)
-    \item Bound computations
-    \item Runtime statistics
-\end{itemize}
-
-Example log entry (JSON format):
-\begin{lstlisting}
-{
-  "event": "node_pruned",
-  "reason": "bound_dominated",
-  "depth": 5,
-  "bound": 42.0,
-  "incumbent": 45.0,
-  "timestamp": 1.234
-}
-\end{lstlisting}
-
-\section{Testing and Verification}
-
-\subsection{Correctness Verification}
-
-For small instances, we verify branch-and-bound against complete enumeration:
-\begin{itemize}
-    \item 10 small instances (4-5 jobs, 2-4 machines)
-    \item All solutions match enumeration exactly
-    \item 100\% verification rate
-\end{itemize}
-
-\subsection{Bound Tightness Testing}
-
-We validate that upper bounds are indeed optimistic:
-\begin{itemize}
-    \item For every evaluated node: $\text{UB}(x) \geq C_{\max}(x)$
-    \item No false pruning detected
-\end{itemize}
-
-\subsection{Performance Benchmarking}
-
-We compare against:
-\begin{itemize}
-    \item Complete enumeration (for small instances)
-    \item Gurobi MIP solver for scheduling subproblems
-    \item Pure knapsack heuristics
-\end{itemize}
+% (Sections on logging, metrics, testing, and verification omitted as requested)
 
 \section{Code Example: Bound Computation}

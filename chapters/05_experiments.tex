@@ -334,7 +334,7 @@ Budget Multiplier & Root Optimal & Completed & Timeout & Leaf Timeout \\
 
 \paragraph{Summary of findings.}
 For all budget multipliers, 
-both bounds solve the vast majority of instances to optimality at the root node. 
+both bounds solve the vast majority of instances to optimality at the root node. Overall, $84,6\%$ of instances are solved at the root node by both bounds.
 The MaxLPT bound generally achieves slightly more completed instances and fewer timeouts compared to the ceiling bound, 
 especially for higher multipliers. Leaf timeouts are rare and nearly identical for both bounds and occur only when evaluation of a single leaf node exceeds the time limit, which is more likely in harder instances.
 This demonstrates that MaxLPT is at least as robust as the ceiling bound, with a small advantage in harder cases and should generally be preferred for practical use.
@@ -674,8 +674,10 @@ $m$ $\backslash$ $j$ & 4 & 8 & 16 & 20 \\
 \end{tabular}
 \end{table}
 
-We can conclude that MIBS performs reasonably well on smaller instances (4 machines, 4 job types), but struggles significantly as the problem size increases, particularly with more job types. In contrast, our specialized branch-and-bound algorithm 
-successfully solved all 180 instances within the time limit, demonstrating its superior scalability and efficiency for this specific bilevel scheduling problem.
+We can conclude that MIBS performs reasonably well on smaller instances (4 machines, 4 job types), 
+but struggles significantly as the problem size increases, particularly with more job types. 
+In contrast, our specialized branch-and-bound algorithm with the maxLPT bound
+successfully solved 179/180 instances within the time limit, demonstrating its superior scalability and efficiency for this specific bilevel scheduling problem.
 
 \paragraph{Detailed runtime comparison.}
 To quantify the performance gap, we matched all 180 test instances between MIBS and our branch-and-bound approach (Ceiling and MaxLPT bounds) and captured Mean, Median, Min, Max, and Standard Deviation. For each instance, we compared runtimes, assigning 3,600 seconds for any timeout.
@@ -684,7 +686,7 @@ To quantify the performance gap, we matched all 180 test instances between MIBS 
     \item \textbf{Total matched instances:} 180
     \item \textbf{Ceiling timeouts:} 5
     \item \textbf{MaxLPT timeouts:} 1
-    \item \textbf{Ceiling speedup (MIBS $-$ Ceiling, seconds):}
+    \item \textbf{Ceiling speedup (MIBS $-$ Ceiling):}
         \begin{itemize}
             \item Mean: 2,876.6s
             \item Median: 3,599.9s
@@ -692,7 +694,7 @@ To quantify the performance gap, we matched all 180 test instances between MIBS 
             \item Max: 3,599.99s
             \item Std: 1,342.8s
         \end{itemize}
-    \item \textbf{MaxLPT speedup (MIBS $-$ MaxLPT, seconds):}
+    \item \textbf{MaxLPT speedup (MIBS $-$ MaxLPT):}
         \begin{itemize}
             \item Mean: 2,959.6s
             \item Median: 3,599.5s
@@ -706,142 +708,35 @@ These results show that both bounds are dramatically faster than MIBS, with MaxL
 
 
 
+\subsection{Key Algorithm Insights and Practical Findings}
 
-\begin{table}[htbp]
-\centering
-\caption{Performance comparison: Branch-and-Bound vs. MIBS}
-\label{tab:mibs-comparison}
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-Configuration & \multicolumn{2}{c}{Our BnB} & \multicolumn{2}{c}{MIBS} \\
-\cmidrule(lr){2-3} \cmidrule(lr){4-5}
-(M × J) & Runtime & Nodes & Runtime & Nodes \\
-\midrule
-2 × 4  & 0.003s & 0 & 0.19s & 512 \\
-2 × 8  & 0.006s & 40 & 7.60s & 13,422 \\
-2 × 12 & 0.009s & 0 & 26.77s & 59,631 \\
-2 × 16 & 0.016s & 0 & 315.73s & 441,743 \\
-2 × 20 & 0.026s & 410 & 1,492.07s & 1,498,762 \\
-2 × 24 & 0.046s & 835 & Timeout & — \\
-\midrule
-4 × 4  & 0.008s & 0 & 0.36s & 702 \\
-4 × 8  & 0.022s & 0 & 9.28s & 18,394 \\
-4 × 12 & 0.357s & 2,517 & 267.45s & 312,856 \\
-4 × 16 & 0.078s & 0 & 1,834.22s & 892,764 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Speedup analysis:}
-\begin{itemize}
-    \item \textbf{2 × 4:} 63× faster (0.003s vs 0.19s)
-    \item \textbf{2 × 8:} 1,267× faster (0.006s vs 7.6s)
-    \item \textbf{2 × 12:} 2,975× faster (0.009s vs 26.8s)
-    \item \textbf{2 × 16:} 19,733× faster (0.016s vs 315.7s)
-    \item \textbf{2 × 20:} 57,387× faster (0.026s vs 1,492s)
-    \item \textbf{4 × 12:} 749× faster (0.357s vs 267.5s)
-    \item \textbf{4 × 16:} 23,515× faster (0.078s vs 1,834s)
-\end{itemize}
-
-\subsection{Timeout Analysis}
-
-\begin{table}[htbp]
-\centering
-\caption{MIBS timeout instances (budget multiplier 2.5)}
-\label{tab:mibs-timeouts}
-\begin{tabular}{@{}lrrr@{}}
-\toprule
-Configuration & MIBS Status & Our BnB Runtime & Speedup \\
-\midrule
-2 × 24 (repetition 1) & Timeout (3,600s) & 0.050s & $>$ 72,000× \\
-2 × 24 (repetition 4) & Timeout (3,600s) & 0.048s & $>$ 75,000× \\
-2 × 20 (repetition 4) & Timeout (3,600s) & 0.022s & $>$ 163,636× \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-MIBS failed to solve 3 instances within the 1-hour limit, while our algorithm solved all instances in under 1 second. This demonstrates the advantage of problem-specific algorithm design over general-purpose bilevel solvers.
-
-\subsection{Solution Quality}
+This subsection combines the main practical findings and algorithmic strengths observed in the computational experiments, highlighting both the performance advantages and critical design choices of the proposed branch-and-bound approach.
 
 \begin{itemize}
-    \item \textbf{Optimality agreement:} For all instances where both solvers completed, optimal makespans matched exactly
-    \item \textbf{Verification:} MIBS serves as independent verification of solution correctness
-    \item \textbf{Correctness confirmed:} 42 out of 45 instances verified (3 MIBS timeouts)
+    \item \textbf{Specialized wins:} Problem-specific branch-and-bound vastly outperforms general-purpose bilevel solver.
+    \item \textbf{Practical advantage:} Our algorithm solves instances in seconds that take MIBS minutes to hours.
+    \item \textbf{Scalability:} MIBS struggles with 8+ job types and 8+ machines; our algorithm handles them routinely.
+    \item \textbf{Dynamic programming precomputation:} Precomputing all knapsack subproblems once per instance amortizes DP overhead across potentially millions of bound computations. This design choice proved critical for performance.
+    \item \textbf{Initialization:} Starting with a high-quality incumbent generated by solving the MaxLPT-problem enables immediate pruning of the entire tree for roughly $84.6\%$ of instances.
+    \item \textbf{Machine count sensitivity:} More machines exponentially increases follower scheduling complexity. Beyond 12 machines, performance degrades significantly for instances not being solved at the root node. Even then, evaluating the scheduling problem remains challenging and can take significant time. This limitation is due to the combinatorial explosion of possible schedules as machines increase and cannot be overcome by exact methods without significant algorithmic innovations or heuristics.
+    \item \textbf{Node limit dependency:} For hard instances, node counts can exceed 100 million before optimality proof. Since the computational cost of evaluating bounds at each node is constant and very low, we can handle such large node counts reasonably well. Future work could explore more aggressive pruning or heuristic guidance to reduce node counts.
+    \item \textbf{Memory requirements:} Dynamic programming tables grow with budget and job types. For exceptionally large budgets compared to job type costs, memory issues may arise.
 \end{itemize}
 
-\subsection{Key Findings}
-
-\begin{itemize}
-    \item \textbf{Specialized wins:} Problem-specific branch-and-bound vastly outperforms general-purpose bilevel solver
-    \item \textbf{Exponential gap:} Speedup grows exponentially with problem size (63× to 163,636×)
-    \item \textbf{Practical advantage:} Our algorithm solves instances in seconds that take MIBS minutes to hours
-    \item \textbf{Scalability:} MIBS struggles with 20+ job types; our algorithm handles them routinely
-    \item \textbf{Node efficiency:} Our algorithm explores 10--1,000× fewer nodes due to tighter bounds
-\end{itemize}
-
-\section{Discussion}
-
-\subsection{Algorithm Strengths}
-
-\textbf{1. Tight upper bounds:}
-The ceiling knapsack bound (Section~\ref{sec:bounding-subproblem}) enables aggressive pruning, particularly effective when:
-\begin{itemize}
-    \item Job durations have low variance (uniform ratio pattern)
-    \item Budget is moderately tight (forces difficult tradeoffs)
-    \item Machine count is small (reduces follower complexity)
-\end{itemize}
-
-\textbf{2. Dynamic programming precomputation:}
-Precomputing all knapsack subproblems once per instance amortizes DP overhead across potentially millions of bound computations. This design choice proved critical for performance.
-
-\textbf{3. Heuristic initialization:}
-Starting with a high-quality incumbent (from MaxLPT-based greedy selection) enables immediate pruning of large search tree portions.
-
-\subsection{Algorithm Limitations}
-
-\textbf{1. Machine count sensitivity:}
-More machines exponentially increases follower scheduling complexity. Beyond 10 machines, performance degrades significantly. This limitation is fundamental to bilevel structure—not easily overcome without approximate methods.
-
-\textbf{2. Node limit dependency:}
-For hard instances, node limits (500k) can be reached before optimality proof. While rare (8 out of 490 total experiments), this indicates room for bound tightening research.
-
-\textbf{3. Memory requirements:}
-Dynamic programming tables grow quadratically with budget and linearly with job types. For exceptionally large budgets ($>$ 1,000), memory constraints may arise.
-
-\subsection{Practical Recommendations}
-
-Based on 490 experiments across multiple test suites, we recommend the following usage guidelines:
-
-\begin{table}[htbp]
-\centering
-\caption{Algorithm performance zones}
-\label{tab:performance-zones}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Zone & Parameter Range & Expected Performance \\
-\midrule
-\textbf{Fast} & $n \leq 12$, $m \leq 6$ & $<$ 10 seconds, 100\% optimal \\
-\textbf{Medium} & $n \leq 16$, $m \leq 8$ & $<$ 1 minute, $>$ 95\% optimal \\
-\textbf{Slow} & $n \leq 20$, $m \leq 10$ & $<$ 10 minutes, $>$ 90\% optimal \\
-\textbf{Hard} & $n > 20$ or $m > 10$ & Variable, may timeout \\
-\bottomrule
-\end{tabular}
-\end{table}
 
 \section{Summary}
 
-This chapter presented a comprehensive computational evaluation of our branch-and-bound algorithm through six experimental phases:
+This chapter provided an extensive computational evaluation of the proposed branch-and-bound algorithm for the bilevel knapsack-scheduling problem, covering correctness, efficiency, scalability, and comparison to state-of-the-art solvers. The main findings are as follows:
 
-\begin{enumerate}
-    \item \textbf{Verification study:} 100\% correctness confirmed against complete enumeration on 100 diverse instances
-    \item \textbf{Speed comparison:} Geometric mean speedup of 2,847× over enumeration; up to 1,017,898× on favorable instances
-    \item \textbf{Sensitivity analysis:} Systematic scaling of job types (4--18), machines (2--10), and budget (1.2×--6.2×)
-    \item \textbf{Grid experiments:} 360 instances testing combined parameter effects across a 6×6 configuration matrix
-    \item \textbf{MIBS benchmarking:} 63×--163,636× faster than state-of-the-art general bilevel solver
-    \item \textbf{Scalability limits:} Practical boundary at 12--16 job types, 8--10 machines
-\end{enumerate}
+\begin{itemize}
+    \item \textbf{Correctness:} The algorithm was verified against complete enumeration on 140 diverse benchmark instances, always matching the optimal makespan and dramatically outperforming enumeration in speed (up to six orders of magnitude faster).
+    \item \textbf{Sensitivity analysis:} Systematic scaling of job types, machines, and budget multipliers revealed robust performance across a wide range of parameters. Most instances were solved at the root node, with pruning rates often exceeding 80\%.
+    \item \textbf{Grid experiments:} In a comprehensive grid of 540 instances, both the ceiling and MaxLPT bounds solved over 84\% of cases at the root node. MaxLPT consistently achieved more completed solves and fewer timeouts, especially for harder instances.
+    \item \textbf{Bound comparison:} MaxLPT explored fewer nodes in every challenging case and was faster in the majority, with negligible overhead in easy (root-optimal) cases. The computational cost of MaxLPT is justified by its superior pruning and robustness.
+    \item \textbf{MIBS benchmarking:} On a representative subset of 180 grid instances, the general-purpose MIBS solver solved only 35, while the branch-and-bound algorithm (MaxLPT) solved 179. Median speedup over MIBS was nearly the full timeout limit (3,600s), confirming orders-of-magnitude practical advantage.
+    \item \textbf{Scalability limits:} The practical boundary for routine solution is around 26 job types and 12 machines in the case where the budget is proportional to the number of job types and the solution cannot be obtained at the root node, with performance degrading for larger instances due to combinatorial explosion in the follower scheduling problem.
+    \item \textbf{Algorithmic insights:} Key design choices—such as dynamic programming precomputation, high-quality incumbent initialization, and efficient upper bounding—were critical for performance and scalability.
+\end{itemize}
 
-\textbf{Overall assessment:}
-The algorithm successfully handles realistic problem sizes (up to 16 job types, 10 machines) with excellent performance. Pruning rates consistently exceed 80\%, demonstrating the effectiveness of our upper bounding techniques. The dramatic speedups over both complete enumeration and MIBS validate the problem-specific algorithm design.
+\textbf{Overall,} the specialized branch-and-bound algorithm, especially with the MaxLPT bound, demonstrates excellent scalability and robustness for realistic problem sizes. It consistently outperforms general-purpose solvers, solves nearly all practical instances in seconds, and provides a reliable tool for challenging bilevel optimization problems.
 
