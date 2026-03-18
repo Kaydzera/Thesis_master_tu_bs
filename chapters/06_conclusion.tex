@@ -1,149 +1,50 @@
 \chapter{Conclusion and Future Work}
 \label{sec:conclusion}
 
-% TODO: Write conclusion
+\section{Summary and Main Contributions}
 
-\section{Summary of Contributions}
+This thesis investigated the Bilevel Parallel Machine Scheduling problem with Adversarial Job Selection, where a leader selects job types within a budget to maximize makespan, anticipating that a follower will optimally schedule jobs to minimize completion time. The problem combines two classic optimization challenges—knapsack selection and parallel machine scheduling—within a hierarchical, adversarial framework.
 
-This thesis addressed the bilevel knapsack-scheduling optimization problem, where a leader selects job types within a budget to maximize system capacity, anticipating that a follower will schedule jobs to minimize makespan.
-
-\textbf{Key achievements:}
-\begin{enumerate}
-    \item \textbf{Efficient algorithm:} Developed a branch-and-bound algorithm achieving speedups of up to 188× compared to complete enumeration
-    
-    \item \textbf{Tight bounds:} Designed a knapsack scheduling relaxation providing upper bounds that enable effective pruning (average 37\% pruning rate)
-    
-    \item \textbf{Practical scalability:} Demonstrated ability to solve instances with 10 job types and 10 machines in seconds
-    
-    \item \textbf{Comprehensive evaluation:} Tested on 130 instances ranging from small (verified optimal) to large (stress tests)
-    
-    \item \textbf{Implementation:} Created modular, well-documented Python implementation with extensive logging
-\end{enumerate}
-
-\section{Key Insights}
-
-\textbf{1. Importance of tight bounds:}
-The knapsack scheduling relaxation provides bounds that are both:
+The main contributions are:
 \begin{itemize}
-    \item Optimistic (never underestimate true optimal value)
-    \item Tight enough to prune most of the search space
-    \item Computable efficiently via dynamic programming
+    \item Formal mathematical model for the bilevel knapsack-scheduling problem, including leader and follower objectives and constraints.
+    \item Development of a branch-and-bound algorithm with efficient pruning, utilizing both ceiling knapsack and MaxLPT bounds, and incorporating an early optimality detection mechanism that can solve certain instances directly at the root node.
+    \item Implementation of dynamic programming for bound computation and incremental LPT scheduling for fast makespan evaluation.
+    \item Integration of Gurobi~\cite{gurobi} for solving integer programming subproblems, ensuring optimality in the follower's schedule.
+    \item Comprehensive computational study demonstrating practical scalability, pruning effectiveness, and comparison to baseline enumeration.
 \end{itemize}
 
-\textbf{2. Search space structure:}
-Problem instances exhibit significant variability:
-\begin{itemize}
-    \item Uniform-price items: easier to prune
-    \item Wide variety in ratios: more exploration needed
-    \item Budget tightness affects pruning effectiveness
-\end{itemize}
+\section{Key Results and Insights}
 
-\textbf{3. Enumeration limitations:}
-Complete enumeration becomes infeasible rapidly:
 \begin{itemize}
-    \item Instance \#14: 3.3 billion combinations
-    \item Enumeration ran 2 hours without finding optimum
-    \item BnB found optimal in 2.43 seconds
+    \item The branch-and-bound algorithm achieves substantial speedups over complete enumeration, successfully solving instances with up to 26 job types and 12 machines, and demonstrating scalability beyond these sizes in certain cases.
+    \item Tight bounds from knapsack scheduling relaxation and LPT rule enable effective pruning, reducing the search space and improving efficiency.
+    \item The modular implementation supports efficient node expansion, incremental updates, and memory savings compared to breadth-first approaches.
+    \item Gurobi integration ensures that the follower's scheduling problem is solved optimally, validating the correctness of the approach.
+    \item Computational experiments confirm the algorithm's robustness across diverse instance types, including uniform, high variance, and correlated job structures.
 \end{itemize}
 
 \section{Limitations}
 
-\textbf{1. Upper bound approximation:}
 \begin{itemize}
-    \item The upper bound computation uses the LPT rule (a $\frac{4}{3}$-approximation~\cite{graham1969bounds}) for the $C_{\max}^{\text{LPT},(d)}$ term
-    \item This may slightly overestimate the true contribution from decided items
-    \item However, the follower's scheduling problem is solved optimally via integer programming (Gurobi)
-    \item The approximation only affects bound tightness, not solution optimality
+    \item The LPT rule provides a $\frac{4}{3}$-approximation for makespan bounds, which may slightly overestimate contributions from decided items.
+    \item There is currently no theory guaranteeing for which instances the optimal solution can be found at the root node, so worst-case complexity remains exponential.
+    \item Scalability is limited for very large instances (e.g., 12+ job types or extreme budget/machine counts) due to exponential complexity if the solution cannot be obtained at the root node.
+    \item The current model focuses solely on makespan; real-world applications may require multi-objective optimization (cost, energy, risk distribution).
 \end{itemize}
 
-\textbf{2. Scalability bounds:}
+\section{Future Directions}
+
 \begin{itemize}
-    \item Instances with 12+ job types become challenging
-    \item Node limit (500k) occasionally hit on large instances
-    \item Exponential worst-case complexity
+    \item Algorithmic improvements: Enhanced pruning, symmetry breaking, learning-based node selection, and parallel search.
+    \item Theoretical analysis: Characterization of instance properties that allow optimal solutions at the root node.
+    \item Problem extensions: Unrelated machines, precedence constraints, stochastic processing times, and multi-objective formulations.
+    \item Application areas: Production scheduling, capacity planning, project management, and resource allocation under uncertainty.
 \end{itemize}
 
-\textbf{3. Single-objective:}
-\begin{itemize}
-    \item Only considers makespan
-    \item Real applications may have multiple objectives (cost, energy, fairness)
-\end{itemize}
-
-\section{Future Research Directions}
-
-\subsection{1. Algorithmic Improvements}
-
-\textbf{Enhanced pruning:}
-\begin{itemize}
-    \item Implement optimality dominance (detect when bound is achieved)
-    \item Symmetry breaking for identical items
-    \item Learning-based node selection
-\end{itemize}
-
-\textbf{Parallel search:}
-\begin{itemize}
-    \item Distribute subtree exploration across multiple cores
-    \item Work-stealing for load balancing
-    \item Shared incumbent for global pruning
-\end{itemize}
-
-\textbf{Hybrid approaches:}
-\begin{itemize}
-    \item Combine with local search for large neighborhoods
-    \item Column generation for many item types
-    \item Constraint programming integration
-\end{itemize}
-
-\subsection{2. Problem Extensions}
-
-\textbf{Generalized scheduling:}
-\begin{itemize}
-    \item Unrelated parallel machines (different speeds)
-    \item Precedence constraints between jobs
-    \item Machine eligibility restrictions
-\end{itemize}
-
-\textbf{Stochastic version:}
-\begin{itemize}
-    \item Uncertain processing times
-    \item Probabilistic budget constraints
-    \item Robust optimization formulations
-\end{itemize}
-
-\textbf{Multi-objective:}
-\begin{itemize}
-    \item Pareto frontier exploration
-    \item Cost vs. capacity trade-offs
-    \item Energy-aware scheduling
-\end{itemize}
-
-\subsection{3. Applications}
-
-\textbf{Production scheduling:}
-\begin{itemize}
-    \item Job type selection for manufacturing facilities
-    \item Capacity planning with scheduling constraints
-    \item Resource allocation under processing time uncertainty
-\end{itemize}
-
-\textbf{Manufacturing:}
-\begin{itemize}
-    \item Tool selection for job shops
-    \item Resource allocation in production planning
-    \item Maintenance scheduling with capacity constraints
-\end{itemize}
-
-\textbf{Project management:}
-\begin{itemize}
-    \item Resource procurement for project portfolios
-    \item Budget allocation across multiple projects
-    \item Workforce planning with skill diversity
-\end{itemize}
 
 \section{Closing Remarks}
 
-Bilevel optimization problems arise naturally in many hierarchical decision-making contexts. This thesis demonstrates that sophisticated algorithms combining intelligent search, tight bounding, and effective pruning can solve practical instances efficiently.
+Bilevel optimization is a powerful framework for hierarchical decision-making under uncertainty. This thesis demonstrates that combining principled search, tight bounding, and efficient pruning enables practical solution of complex adversarial scheduling problems. The branch-and-bound approach, supported by dynamic programming and integer programming solvers, provides a solid foundation for future research and real-world deployment.
 
-The branch-and-bound framework provides a principled approach that guarantees optimality while achieving orders-of-magnitude speedups over naive enumeration. The success on real-world-sized instances (10 job types, 10 machines) suggests the methodology is viable for deployment in operational systems.
-
-Future work should focus on scaling to even larger instances through parallelization and exploring richer problem variants that capture additional real-world complexities. The foundation established here provides a solid platform for such extensions.
+The methodology is viable for deployment in operational systems, as confirmed by substantial speedups and scalability in computational experiments. Future work should focus on scaling to even larger instances through parallelization and exploring richer problem variants that capture additional real-world complexities. The foundation established here provides a solid platform for such extensions.

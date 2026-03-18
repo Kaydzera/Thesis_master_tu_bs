@@ -4,11 +4,11 @@
 
 \section{Software Architecture}
 
-The implementation is modular, with key components for search, problem modeling, and scheduling:
+The implementation is modular, with key components for the branch-and-bound search, problem modeling, and scheduling:
 \begin{itemize}
     \item \textbf{models.py:} Data structures for problem instances and search nodes
     \item \textbf{bnb.py:} Branch-and-bound solver with pruning and search tree logic
-    \item \textbf{solvers.py:} Scheduling subproblems solved via Gurobi (integer programming)
+    \item \textbf{solvers.py:} Scheduling subproblems solved via Gurobi~\cite{gurobi}, version 12.0.3. 
     \item \textbf{bilevel\_gurobi.py:} Complete enumeration baseline for correctness verification
 \end{itemize}
 
@@ -52,8 +52,6 @@ class ProblemNode:
 
 The makespan contribution from committed jobs is incrementally tracked and updated using the internal machine load state. Each node distributes job occurrences to machines following the LPT rule, ensuring efficient evaluation without recomputation. This approach is computationally efficient and provides good approximate makespan values for partial leader decisions.
 
-\section{Algorithmic Optimizations}
-
 \section{Search Tree Structure and Algorithmic Optimizations}
 
 \subsection{Depth-First Search and Node Expansion}
@@ -75,7 +73,7 @@ The branch-and-bound algorithm uses a depth-first search strategy:
 The initial incumbent is computed by solving the MaxLPT relaxation:
 \begin{itemize}
     \item The MaxLPT problem provides a provable upper bound and a feasible leader solution.
-    \item The resulting job selection is passed to the Gurobi scheduler, which solves the follower's scheduling problem optimally via integer programming.
+    \item The resulting job selection is passed to the Gurobi scheduler~\cite{gurobi}, which solves the follower's scheduling problem optimally via integer programming.
     \item This guarantees a strong starting incumbent and enables immediate pruning for many instances.
 \end{itemize}
 
@@ -87,9 +85,3 @@ Each node tracks remaining budget and incremental makespan contributions:
     \item The makespan contribution from decided items is cached and updated incrementally, avoiding recomputation.
     \item When generating a child node, machine loads are updated using the LPT rule, reducing complexity from $O(d \cdot J)$ to $O(x_{d+1} \log m)$ per node expansion.
 \end{itemize}
-
-\section{Logging and Metrics}
-
-% (Sections on logging, metrics, testing, and verification omitted as requested)
-
-\section{Code Example: Bound Computation}

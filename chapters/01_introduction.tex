@@ -17,9 +17,9 @@ We study a bilevel optimization problem combining two classic research problems 
     \item \textbf{Lower level (Follower):} Scheduling problem -- assign jobs to machines to minimize makespan
 \end{itemize}
 
-The leader's objective is to maximize the makespan (completion time). 
+The leader's objective is to maximize the makespan (completion time).
 This models a worst-case robust optimization approach, where the leader tries to account for the worst possible makespan,
- even when the follower actually minimizes completion time by finding an optimal schedule.
+ even when the follower actually minimizes completion time by finding an optimal schedule. The lower-level scheduling problem is solved via integer programming using Gurobi~\cite{gurobi}.
 
 \section{Contributions}
 
