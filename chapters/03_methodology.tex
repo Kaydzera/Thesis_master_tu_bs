@@ -26,17 +26,23 @@ The most straightforward approach is to enumerate all feasible selections and so
 
 \subsection{Combinatorial Growth}
 
-The search space grows exponentially with the problem parameters. The maximum number of copies that can be purchased for item $i$ is given by
+
+The search space grows exponentially with the problem parameters. 
+Here, the total number of feasible selections is determined by the number of ways to choose non-negative integer quantities $x_i$ for each item type $i$ such that the total cost does not exceed the budget $B$.
+Thus, the maximum number of copies that can be purchased for item $i$ is given by
 \[
-\left\lfloor \frac{B}{p_i} \right\rfloor,
+\left\lfloor \frac{B}{p_i} \right\rfloor.
 \]
-leading to a total number of possible combinations of
+Because we have to account for the already spent budget from the first $d$ items, its not quite trivial to compute the exact number of feasible combinations. However, an upper bound can be expressed as
 \[
 \prod_{i=1}^{n} \left( \left\lfloor \frac{B}{p_i} \right\rfloor + 1 \right).
 \]
 For each combination, the algorithm must verify the budget constraint and solve the scheduling problem, which is itself NP-hard.
 
-To illustrate the scale of this challenge, consider an instance with $n=10$ items, budget $B=100$, and prices $p_i \in [5, 15]$. This results in a search space of approximately $10^{10}$ to $10^{12}$ combinations. Even assuming an optimistic rate of 1 ms per scheduling problem solve, complete enumeration would require between 115 days and 31 years of computation time, making this approach clearly intractable for practical instances.
+To illustrate the scale of this challenge, consider an instance with $n=10$ items, budget $B=100$, and prices $p_i = 5+i$ for $i=0,\ldots,9$.
+The maximum number of copies per item is $(20, 16, 14, 12, 11, 10, 9, 8, 7, 7)$.
+This yields an upper bound on the number of combinations of $5.29 \times 10^{10}$.
+Assuming an optimistic rate of 1 ms per scheduling problem solve, complete enumeration would require $5.29 \times 10^7$ seconds ($\approx$ 612.61 days or 1.68 years), making this approach clearly intractable for practical instances.
 
 \section{Branch-and-Bound Algorithm}
 
@@ -105,7 +111,8 @@ Figure~\ref{fig:search-tree} illustrates the branching structure for a problem w
 
 \subsection{Follower's Scheduling Algorithm}
 
-To evaluate partial solutions in the branch-and-bound tree, we need to compute the makespan for the jobs that have already been selected. For this purpose, we use the \textbf{Longest Processing Time (LPT)} rule~\cite{graham1969bounds}, a well-known greedy algorithm for scheduling jobs on parallel machines. 
+
+To evaluate partial solutions in the branch-and-bound tree, we need to compute the makespan for the jobs that have already been selected. For this purpose, we use the \textbf{Longest Processing Time (LPT)} rule~\cite{graham1969bounds}, a well-known greedy algorithm for scheduling jobs on parallel machines (see Algorithm~\ref{alg:scheduling} for the procedure used to compute $C_{\max}^{\text{LPT},(d)}$).
 
 Since item types are presorted from longest to shortest duration, the algorithm processes jobs in non-ascending order of processing time, greedily assigning each job to the least loaded machine:
 
@@ -146,16 +153,30 @@ we can safely prune the subtree whenever
 \end{equation}
 
 \textbf{Computing the upper bound:}
-The key challenge is to efficiently compute a tight upper bound $\text{UB}(x_1, \ldots, x_d, B_{\text{rem}})$ that overestimates the best possible makespan in the subtree without solving the full bilevel problem. We achieve this by decomposing the bound into two components: the contribution from already-fixed items $1, \ldots, d$, and an estimate of the contribution from the remaining items $d+1, \ldots, n$.
+The key challenge is to efficiently compute a tight upper bound $\text{UB}(x_1, \ldots, x_d, B_{\text{rem}})$ that overestimates the best possible makespan in the subtree without solving the full bilevel problem. 
+We achieve this by decomposing the bound into two components: 
+the contribution from already-fixed items $1, \ldots, d$, and an estimate of the contribution from the remaining items $d+1, \ldots, n$.
 
-For the fixed items, we schedule the jobs of types $1, \ldots, d$ with quantities $x_1, \ldots, x_d$ using the Longest-Processing-Time (LPT) rule~\cite{graham1969bounds} (see Algorithm~\ref{alg:scheduling}) to obtain makespan $C_{\max}^{\text{LPT},(d)}$. For the remaining items, rather than enumerating all possible selections, we formulate two different relaxations that provide an upper bound on their contribution to the makespan. The first is a knapsack scheduling relaxation that optimistically estimates the additional makespan contribution from the remaining items under the budget constraint. The second is a Max-LPT relaxation that directly maximizes the LPT makespan contribution from the remaining items. Both approaches yield valid upper bounds, and we will compare their computational trade-offs in Chapter~\ref{sec:experiments}. Both bounds will be discussed in detail in Section~\ref{sec:bounding-subproblem} and Section~\ref{sec:max-lpt-relaxation}, along with efficient algorithms for solving the bounding subproblems.
+For the fixed items, we schedule the jobs of types $1, \ldots, d$ with quantities $x_1, \ldots, x_d$ using the Longest-Processing-Time (LPT) rule~\cite{graham1969bounds} (see Algorithm~\ref{alg:scheduling}) 
+to obtain makespan $C_{\max}^{\text{LPT},(d)}$. 
+For the remaining items, rather than enumerating all possible selections, we formulate two different relaxations that provide an upper bound on their contribution to the makespan. 
+The first is a knapsack scheduling relaxation that optimistically estimates the additional makespan contribution from the remaining items under the budget constraint. 
+In the latter part of this work, we will refer to this as the \textbf{ceiling bound} since it uses the ceiling function to overestimate the effect of scheduling batches of items on the makespan.
+
+The second relaxation is a Max-LPT relaxation that directly maximizes the LPT makespan contribution from the remaining items, which we will call the \textbf{Max-LPT bound} going forward.
+Both approaches yield valid upper bounds, and we will compare their computational trade-offs in Chapter~\ref{sec:experiments}. 
+Both bounds will be discussed in detail in Section~\ref{sec:bounding-subproblem} and Section~\ref{sec:max-lpt-relaxation}, along with efficient algorithms for solving the bounding subproblems.
 
 
 \subsection{Branch-and-Bound Algorithm}
 
-With the search tree structure, valid upper bounds, and pruning conditions established, we can now present the complete branch-and-bound algorithm. Algorithm~\ref{alg:bnb} integrates all components: it systematically explores the search tree, computes upper bounds at each node, and prunes branches when the bound indicates that no improvement over the incumbent is possible. 
+With the search tree structure, valid upper bounds, and pruning conditions established, we can now present the complete branch-and-bound algorithm. 
+Algorithm~\ref{alg:bnb} integrates all components: it systematically explores the search tree, computes upper bounds at each node, and prunes branches when the bound indicates that no improvement over the incumbent is possible. 
 
-A key feature of our algorithm is the \textbf{early optimality detection} mechanism: before entering the main search loop, we solve the Max-LPT problem and verify whether the LPT schedule coincides with the optimal schedule for this solution. If $C_{\max}^{\text{LPT}}(x_{\text{LPT}}) = C_{\max}^{\text{OPT}}(x_{\text{LPT}})$, we have proven that this solution is optimal for the full knapsack-scheduling problem and can return immediately without any branch-and-bound search. Otherwise, we use the Max-LPT solution as a strong initial incumbent and proceed with the search. We discuss this mechanism in detail in Section~\ref{sec:early-optimality-detection}. The algorithm maintains a queue of unexplored nodes and continues until all promising branches have been exhausted.
+A key feature of our algorithm is an \textbf{early optimality detection} mechanism we will discuss in Section~\ref{sec:early-optimality-detection}, which can identify certain instances where the optimal solution can be found at the root node: 
+before entering the main search loop, we solve the Max-LPT problem (see Definition~\ref{def:maxlpt-problem}) and verify whether the LPT schedule coincides with the optimal schedule for this solution. If $C_{\max}^{\text{LPT}}(x_{\text{LPT}}) = C_{\max}^{\text{OPT}}(x_{\text{LPT}})$, we have proven that this solution is optimal for the full knapsack-scheduling problem and can return immediately without any branch-and-bound search. 
+Otherwise, we use the Max-LPT solution as a strong initial incumbent and proceed with the search. The algorithm maintains a queue of unexplored nodes and continues until all promising branches have been exhausted.
+
 
 \begin{algorithm}
 \caption{Branch-and-Bound for Bilevel Problem}
@@ -188,7 +209,10 @@ A key feature of our algorithm is the \textbf{early optimality detection} mechan
 \end{algorithmic}
 \end{algorithm}
 
-\section{Solving the Bounding Subproblem}
+\vspace{0.5em}
+\noindent\textit{Comment:} $C_{\max}^{\text{LPT}}(x_{\text{LPT}})$ denotes the makespan obtained by scheduling the job selection $x_{\text{LPT}}$ using the Longest Processing Time (LPT) rule. $C_{\max}^{\text{OPT}}(x_{\text{LPT}})$ denotes the optimal makespan for the same job selection, i.e., the minimum possible makespan achievable by any schedule. Comparing these two values allows early detection of optimality if the LPT rule happens to yield an optimal schedule for $x_{\text{LPT}}$.
+
+\section{The Ceiling Bound}
 \label{sec:bounding-subproblem}
 
 Having established the branch-and-bound framework, we now develop the two upper bounding methods in detail. We begin with the knapsack scheduling relaxation, which provides an optimistic estimate of the makespan contribution from items not yet selected. We then present the Max-LPT approach, which maximizes the LPT makespan directly and provides provably good approximation guarantees.
@@ -209,8 +233,6 @@ The objective function uses the ceiling term $\lceil y_i / m \rceil$ to provide 
 
 We now establish that this formulation indeed provides a valid upper bound on the optimal follower makespan for any completion of the partial solution.
 
-\textbf{Validity of the upper bound:}
-
 \begin{theorem}[Upper Bound Validity]
 \label{thm:upper-bound}
 The upper bound computed by equation~\eqref{eq:ub} is valid, i.e., for any completion of the partial solution $(x_1, \ldots, x_d)$ with items $(x_{d+1}, \ldots, x_n)$, the optimal follower makespan satisfies:
@@ -224,7 +246,7 @@ We establish the upper bound by analyzing the Longest-Processing-Time (LPT) sche
 
 The Bound is derived as an execution of the LPT rule for the job types $1, \ldots, d$ with quantities $x_1, \ldots, x_d$ and an upper bound on the contribution of the remaining job types $d+1, \ldots, n$ with quantities $y_{d+1}, \ldots, y_n$ chosen to maximize the LPT makespan under the budget constraint.
 
-Consider LPT scheduling on $m$ parallel machines. By construction of the branch-and-bound tree, assume job types are ordered by decreasing processing time: $d_1 \geq d_2 \geq \cdots \geq d_n$. The LPT rule assigns each job to the currently least-loaded machine.
+Consider LPT scheduling on $m$ parallel machines. By construction of the branch-and-bound tree, assume job types are ordered by non-increasing processing time: $d_1 \geq d_2 \geq \cdots \geq d_n$. The LPT rule assigns each job to the currently least-loaded machine.
 
 At depth $d$ in the search tree, quantities $x_1, \ldots, x_d$ are fixed, and all copies of these job types have been scheduled using LPT. Let $C_{\max}^{\text{LPT},(d)}$ denote the makespan after scheduling these jobs. To obtain an upper bound, we assume all machines are filled to exactly $C_{\max}^{\text{LPT},(d)}$—this represents a worst-case scenario that can only increase (never decrease) the final makespan.
 
@@ -274,15 +296,22 @@ To efficiently compute bounds at different depths, we pre-solve the DP table wit
 \section{Another Upper Bound: Maximizing the LPT Rule}
 \label{sec:max-lpt-relaxation}
 
-While the branch-and-bound algorithm uses the LPT rule to model the follower's scheduling behavior, we can exploit this connection to derive tighter bounds and better initial solutions. Since maximizing the LPT makespan provides a provably good approximation to the leader's optimal solution, we can use this approach in two ways: first, solving the Max-LPT problem before starting the branch-and-bound algorithm yields a strong initial incumbent; second, applying the Max-LPT approach at each node in the search tree provides an alternative upper bound for pruning. We will compare the computational trade-offs between different bounding strategies experimentally in Chapter~\ref{sec:experiments}.
+While the branch-and-bound algorithm uses the LPT rule to model the follower's scheduling behavior, we can exploit this connection to derive tighter bounds and better initial solutions. 
+Since maximizing the LPT makespan provides a provably good approximation to the leader's optimal solution, we can use this approach in two ways: 
+first, solving the Max-LPT problem before starting the branch-and-bound algorithm yields a strong initial incumbent;
+ second, applying the Max-LPT approach at each node in the search tree provides an alternative upper bound for pruning.
+  We will compare the computational trade-offs between different bounding strategies experimentally in Chapter~\ref{sec:experiments}.
 
 \subsection{The Max-LPT Problem}
 
-Recall that the \textbf{Longest Processing Time (LPT) rule}~\cite{graham1969bounds} schedules jobs in decreasing order of their processing times, always assigning the next job to the machine with the smallest current load. This greedy rule is well-known to provide good makespan approximations for parallel machine scheduling. We will confirm these observations in our computational experiments, where we find that the LPT rule often yields optimal or near-optimal solutions for the follower's scheduling problem.
+Recall that the \textbf{Longest Processing Time (LPT) rule}~\cite{graham1969bounds} schedules jobs in non-increasing order of their processing times, always assigning the next job to the machine with the smallest current load. 
+This greedy rule is well-known to provide good makespan approximations for parallel machine scheduling. 
+We will confirm these observations in our computational experiments in Chapter~\ref{sec:experiments}, where we find that the LPT rule often yields optimal or near-optimal solutions for the follower's scheduling problem.
 
 We now define the \textbf{Max-LPT problem} as follows:
 
 \begin{definition}[Max-LPT Problem]
+\label{def:maxlpt-problem}
 Given $n$ item types indexed by $i = 1, \ldots, n$, where each item type $i$ has duration $d_i$ and cost $p_i$, a number of machines $m$, and a budget constraint $B$, the Max-LPT problem seeks to find a combination of items $(x_1, \ldots, x_n)$ with $x_i \geq 0$ for all $i$ (allowing multiple copies of each item type) such that:
 \begin{itemize}
     \item The budget constraint is satisfied: $\sum_{i=1}^{n} p_i x_i \leq B$
@@ -298,7 +327,7 @@ Before presenting the algorithm for solving the Max-LPT problem, we establish it
 
 \begin{theorem}[3/4-Approximation Guarantee]
 \label{thm:maxlpt-approx}
-Let $C_{\max}^{\text{LPT}}(x)$ denote the optimal value of the makespan generated by the LPT rule for a given job selection $x$, and let $C_{\max}^{\text{OPT}}(x)$ denote the optimal value of the scheduling problem for a job selection $x$. Then
+Let $C_{\max}^{\text{OPT}}(x)$ denote the optimal value of the scheduling problem for a job selection $x$. Then
 \begin{equation*}
 \frac{3}{4} \cdot C_{\max}^{\text{OPT}}({x^*}) \leq C_{\max}^{\text{OPT}}(\hat{x}) \leq C_{\max}^{\text{OPT}}({x^*}).
 \end{equation*}
@@ -389,7 +418,7 @@ Now, let $\hat{x}$ be the solution that maximizes the LPT makespan, i.e., $\hat{
 This proves that the solution obtained by maximizing the LPT makespan and then solving the corresponding scheduling problem is a $\frac{3}{4}$-approximation to the optimal solution of the knapsack-scheduling problem.
 \end{proof}
 
-This result is significant because it guarantees that solving the Max-LPT problem provides a constant-factor approximation for the harder problem of finding the optimal job selection under optimal scheduling. Moreover, as we will show next, the Max-LPT problem can be solved optimally in pseudo-polynomial time.
+This result is significant because it guarantees that solving the Max-LPT problem provides a constant-factor approximation for the harder problem of finding the optimal job selection under optimal scheduling. Moreover, as we will show later, the Max-LPT problem can be solved optimally in pseudo-polynomial time.
 
 \subsection{Early Optimality Detection via Max-LPT}
 \label{sec:early-optimality-detection}
@@ -399,13 +428,15 @@ Recall that for any job selection $x$, the LPT makespan provides an upper bound 
 \[
 C_{\max}^{\text{LPT}}(x) \geq C_{\max}^{\text{OPT}}(x).
 \]
-Now suppose $x^*$ is the optimal solution to the Max-LPT problem, i.e., $x^* \in \arg\max_{x} C_{\max}^{\text{LPT}}(x)$. If we have that $C_{\max}^{\text{LPT}}(x^*) = C_{\max}^{\text{OPT}}(x^*)$, then for any other feasible job selection $x$ we have:
+
+Now suppose $x^*$ is an optimal solution to the Max-LPT problem, i.e., $x^* \in \arg\max_{c^Tx \leq B} C_{\max}^{\text{LPT}}(x)$. If we have that $C_{\max}^{\text{LPT}}(x^*) = C_{\max}^{\text{OPT}}(x^*)$, then for any other feasible job selection $x$ we have:
 \[
 C_{\max}^{\text{OPT}}(x^*) = C_{\max}^{\text{LPT}}(x^*) \geq C_{\max}^{\text{LPT}}(x) \geq C_{\max}^{\text{OPT}}(x).
 \]
 This chain of inequalities shows that if this property holds, $x^*$ is not only optimal for the Max-LPT problem but also for the full knapsack-scheduling problem with optimal scheduling.
 
-\textbf{Practical significance:} Since we compute $C_{\max}^{\text{OPT}}(x^*)$ anyway to establish the initial incumbent for the branch-and-bound algorithm, we can verify whether $C_{\max}^{\text{LPT}}(x^*) = C_{\max}^{\text{OPT}}(x^*)$ holds at no additional cost. When this equality holds, we can skip the entire search and solve even complex problems within seconds. As we will demonstrate in Chapter~\ref{sec:experiments}, this situation occurs in a significant fraction of instances, substantially reducing the computational effort required. This may be seen as the main contribution of this work.
+\textbf{Practical significance:} Since we compute $C_{\max}^{\text{OPT}}(x^*)$ anyway to establish the initial incumbent for the branch-and-bound algorithm, we can verify whether $C_{\max}^{\text{LPT}}(x^*) = C_{\max}^{\text{OPT}}(x^*)$ holds at no additional cost. When this equality holds, we can skip the entire search and solve even complex problems within seconds. As we will demonstrate in Chapter~\ref{sec:experiments}, this situation occurs in roughly $84.4\%$ of instances, substantially reducing the computational effort required. 
+This may be seen as the main contribution of this work.
 
 \subsection{Ordered Makespan Notation}
 
@@ -444,22 +475,22 @@ The Algorithm~\ref{alg:maxLPT} MAX-LPT always computes an optimal solution for t
 \State Initialize incumbent $z^* \gets 0$
 
 \For{each item $J \in \{1,\ldots,n\}$}
-    \State Compute $B_i := \left\lfloor \frac{B}{m} \right\rfloor$  \Comment{$B_i$ is the maximal possible per-machine budget. The index $i$ maps the budget to machine $i$, but since all machines receive the same per-machine budget, the index could be omitted in theory.}
-    \State $\hat{B} := B - m \cdot B_i$
+    \State Compute $B^* := \left\lfloor \frac{B}{m} \right\rfloor$ 
+    \State $\hat{B} := B - m \cdot B^*$
     
     \If{$\hat{B} < p_J$}
         \State $k \gets 0$
-        \While{$\hat{B} < p_J$ \textbf{and} $B_i > 0$}
+        \While{$\hat{B} < p_J$ \textbf{and} $B^* > 0$}
             \State $k \gets k + 1$
-            \State $B_i := \left\lfloor \frac{B - k \cdot m}{m} \right\rfloor$
-            \State $\hat{B} := B - m \cdot B_i$
+            \State $B^* := \left\lfloor \frac{B - k \cdot m}{m} \right\rfloor$
+            \State $\hat{B} := B - m \cdot B^*$
         \EndWhile
         \If{$\hat{B} < p_J$}
             \State \textbf{continue} \Comment{Skip this item if budget still insufficient}
         \EndIf
     \EndIf
     
-    \State $z \gets DP(J, B_i) + d_J$
+    \State $z \gets DP(J, B^*) + d_J$
     \If{$z > z^*$}
         \State $z^* \gets z$
     \EndIf
@@ -479,33 +510,33 @@ Since we assume to have an optimal solution, there cannot be a combination of jo
 maximizes $C_{\max}^{(m)}$ with  budget $B - p_I$ and job types $1, \ldots, I$ available.
 Otherwise, we could replace the combination of jobs in the optimal solution before putting $I$ on the least loaded machine with the combination that maximizes $C_{\max}^{(m)}$ and then place item $I$ on the least loaded machine,
  which contradicts the optimality of the solution.
-We exploit this property by considering each item type $J$ as a candidate for the job that finishes last. For a fixed candidate $J$, we maximize the $C_{\max}^{(m)}$ for the remaining jobs under the remaining budget.
+We exploit this property by considering each item type $J \in \{1, \ldots, n\}$ as a candidate for the job that finishes last. For a fixed candidate $J$, we maximize the $C_{\max}^{(m)}$ for the remaining jobs under the remaining budget.
 
 We now note some observations about the structure of optimization problems looking to maximize $C_{\max}^{(m)}$ under a budget constraint:
 Considering any schedule, we can define the \textbf{per-machine-budget} of a machine $M$ as the sum of the prices of all jobs assigned to this machine. 
 If now the following holds for a combination of items and the resulting schedule:
 \begin{itemize}
-    \item \textbf{Property 1:} The per-machine-budget $B_i$ of the least loaded machine $i$ is highest-possible. This means that for all machines, we cannot redistribute the budget to achieve a higher per-machine-budget for the least loaded machine.
-    \item \textbf{Property 2:} with this highest possible budget $B_i$, the best possible combination of job types from among $1, \ldots, J$ was acquired for the least loaded machine,
+    \item \textbf{Property 1:} The per-machine-budget $B^*$ of the least loaded machine $i$ is highest-possible. This means that for all machines, we cannot redistribute the budget to achieve a higher per-machine-budget for the least loaded machine.
+    \item \textbf{Property 2:} with this highest possible budget $B^*$, the best possible combination of job types from among $1, \ldots, J$ was acquired for the least loaded machine,
 \end{itemize}
 then there cannot be a combination of jobs that would yield a larger $C_{\max}^{(m)}$ for the budget available and job types $1, \ldots, J$ available.
 
 By using the LPT rule and a dynamic programming table, we can force a schedule that fulfills the above properties. Let
 \[
-B_i := \left\lfloor \frac{B}{m} \right\rfloor,
+B^* := \left\lfloor \frac{B}{m} \right\rfloor,
 \]
  which is exactly the highest possible per-machine budget for the machine that gets the least amount of budget. Let
 \[
-\hat{B} = B - m \cdot B_i
+\hat{B} = B - m \cdot B^*
 \]
 be the remaining budget.
 
 If $\hat{B} \ge p_J$, the final job of type $J$ can be paid without reducing the per-machine budget. This corresponds to the case where no adjustment is needed in the algorithm.
-By evaluating the unbounded knapsack solution stored in $DP(J, B_i)$, we can reconstruct the best possible combination of item types so that the sum of durations is maximized with budget $B_i$ and item types $1, \ldots, J$ available.
-If we buy $m$ copies of every item in this combination and place them according to the LPT rule, we will assign the combination of items yielded by $DP(J, B_i)$ to each of the $m$ machines. Since by following this procedure, we will fulfill \textbf{Property 1} and \textbf{Property 2} mentioned above, there cannot be a combination of jobs that would yield a larger $C_{\max}^{(m)}$ for the budget $m \cdot B_i$ and job types $1, \ldots, J$ available. 
+By evaluating the unbounded knapsack solution stored in $DP(J, B^*)$, we can reconstruct the best possible combination of item types so that the sum of durations is maximized with budget $B^*$ and item types $1, \ldots, J$ available.
+If we buy $m$ copies of every item in this combination and place them according to the LPT rule, we will assign the combination of items yielded by $DP(J, B^*)$ to each of the $m$ machines. Since by following this procedure, we will fulfill \textbf{Property 1} and \textbf{Property 2} mentioned above, there cannot be a combination of jobs that would yield a larger $C_{\max}^{(m)}$ for the budget $m \cdot B^*$ and job types $1, \ldots, J$ available. 
  Adding the duration of the final job $d_J$ gives us the total makespan for this candidate solution.
 
-If $\hat{B} < p_J$, the per-machine budget $B_i$ must be reduced uniformly until the remaining budget is large enough to pay for item $J$. After this adjustment, the optimal combination of jobs scheduled on the least loaded machine before adding $J$ is once again obtained from the dynamic programming table $DP(J, B_i)$. This corresponds to the adjustment loop in the algorithm.
+If $\hat{B} < p_J$, the per-machine budget $B^*$ must be reduced uniformly until the remaining budget is large enough to pay for item $J$. After this adjustment, the optimal combination of jobs scheduled on the least loaded machine before adding $J$ is once again obtained from the dynamic programming table $DP(J, B^*)$. This corresponds to the adjustment loop in the algorithm.
 
 Since the algorithm evaluates all item types as possible final jobs and, for each of them, computes the optimal preceding schedule, it considers all candidates for an optimal solution. By selecting the maximum makespan among these candidates, the algorithm returns an optimal solution to the max-LPT problem.
 \end{proof}
@@ -515,13 +546,14 @@ The running time of the algorithm is
 \[
 \mathcal{O}(n \cdot B).
 \]
-This is because we compute the DP table for the unbounded knapsack problem once, which takes $\mathcal{O}(n \cdot B)$ time, and then we iterate through each of the $n$ item types as candidates for the last job. For each candidate, we perform a constant number of operations (looking up the DP table and adjusting the budget if necessary), resulting in an overall running time of $\mathcal{O}(n \cdot B)$.
+This is because we compute the DP table for the unbounded knapsack problem once, which takes $\mathcal{O}(n \cdot B)$ time, and then we iterate through each of the $n$ item types as candidates for the last job. For each candidate, we perform a constant number of operations (looking up the DP table and adjusting the budget no more than $B$ times if necessary), resulting in an overall running time of $\mathcal{O}(n \cdot B)$.
 
 \subsection{Connection to the Knapsack-Scheduling Problem}
 
 The max-LPT algorithm provides a good approximation to the leader's problem by maximizing the makespan under the LPT scheduling rule. While the LPT rule is itself an approximation for optimal scheduling, this algorithm finds the \emph{optimal} job selection that maximizes the LPT makespan. 
 We have already shown that this approach yields a $\frac{3}{4}$-approximation for the original knapsack-scheduling problem (Section~\ref{sec:formulation}). If we solve the max-LPT problem before calling the branch and bound Algorithm of the bilevel knapsack program, we obtain a starting incumbent that is guaranteed to be within $\frac{3}{4}$ of the optimal solution. 
-In the branch and bound algorithm itself, we can use the max-LPT algorithm to compute upper bounds at each node by evaluating the max-LPT solution for the remaining budget and item types. This provides an upper bound with a $\frac{3}{4}$-approximation guarantee, which is better than the upper bound we used before. 
+In the branch and bound algorithm itself, we can use the max-LPT algorithm to compute upper bounds at each node by evaluating the max-LPT solution for the remaining budget and item types. 
+This provides an upper bound with a $\frac{3}{4}$-approximation guarantee.
 The disadvantage of this approach is that we have to compute the unbounded knapsack DP table for each depth d in the branch and bound tree, since the remaining item types change at each depth:
 In the max-LPT algorithm, we need to solve the unbounded knapsack problem for the remaining item types $d+1, \ldots, n$ at depth $d$.
 Since we have to regard every item type $i \in \{d+1, \ldots, n\}$ as a candidate for the last job that finishes, we need to be able to evaluate the best possible combination of item types $d+1, \ldots, i$ for each budget. 
@@ -532,7 +564,11 @@ We compare both upper bounds experimentally in Chapter~\ref{sec:experiments} to 
 
 \subsection{Modified Branch-and-Bound with Max-LPT Upper Bound}
 
-To use the Max-LPT approach as an alternative upper bound in the branch-and-bound algorithm, we modify the bounding step as shown in Algorithm~\ref{alg:bnb-maxlpt}. The key difference from Algorithm~\ref{alg:bnb} is that instead of computing the upper bound using the ceiling knapsack relaxation (equation~\eqref{eq:ub}), we call the Max-LPT algorithm on the remaining item types with the remaining budget. This requires precomputing a separate DP table for each depth level, as the set of remaining items changes as we descend the tree. Like Algorithm~\ref{alg:bnb}, this variant also incorporates the early optimality detection mechanism to potentially avoid the search entirely.
+To use the Max-LPT approach as an alternative upper bound in the branch-and-bound algorithm, we modify the bounding step as shown in Algorithm~\ref{alg:bnb-maxlpt}. 
+The key difference from Algorithm~\ref{alg:bnb} is that instead of computing the upper bound using the ceiling knapsack relaxation (equation~\eqref{eq:ub}), 
+we call the Max-LPT algorithm on the remaining item types with the remaining budget. 
+This requires precomputing a separate DP table for each depth level, as the set of remaining items changes as we descend the tree. 
+Like Algorithm~\ref{alg:bnb}, this variant also incorporates the early optimality detection \ref{sec:early-optimality-detection} mechanism to potentially avoid the search entirely.
 
 \begin{algorithm}
 \caption{Branch-and-Bound with Max-LPT Upper Bound}

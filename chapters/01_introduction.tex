@@ -13,8 +13,8 @@ This scenario exemplifies a \emph{bilevel optimization problem}, where one decis
 
 We study a bilevel optimization problem combining two classic research problems of mathematical optimization:
 \begin{itemize}
-    \item \textbf{Upper level (Leader):} Knapsack problem -- select job types within a budget
-    \item \textbf{Lower level (Follower):} Scheduling problem -- assign jobs to machines to minimize makespan
+    \item \textbf{Upper level (Leader):} Unbounded Knapsack problem -- select jobs from a finite set of job types within a budget
+    \item \textbf{Lower level (Follower):} Scheduling problem on parallel identical machines -- assign jobs to machines to minimize makespan
 \end{itemize}
 
 The leader's objective is to maximize the makespan (completion time).
@@ -28,10 +28,9 @@ Throughout this thesis, we refer to this problem as the \emph{bilevel knapsack-s
 This thesis makes the following contributions:
 \begin{enumerate}
     \item Formal mathematical model of the bilevel knapsack-scheduling problem
-    \item Branch-and-bound algorithm with two different bounds based on a knapsack scheduling relaxation
+    \item Branch-and-bound algorithm with two different bounds to prune subtrees based on a knapsack scheduling relaxation
     \item Efficient dynamic programming solver for the two bounding subproblems
-    \item Comprehensive computational study demonstrating practical scalability comparing the two different approaches
-    \item Analysis of pruning effectiveness of the bounds and insights into instance characteristics affecting performance
+    \item Comprehensive computational study demonstrating practical scalability comparing the two different approaches with each other and with a solver from the literature
 \end{enumerate}
 
 \section{Organization}

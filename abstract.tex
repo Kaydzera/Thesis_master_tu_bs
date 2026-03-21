@@ -3,10 +3,10 @@
 % Current data (188× speedup, 37% pruning) reflects old experiments.
 
 This thesis investigates a bilevel knapsack-scheduling problem where a leader and follower have conflicting objectives regarding system makespan.
-In the upper-level problem, the leader selects quantities of job types within a budget constraint to maximize the makespan, thereby maximizing system utilization.
-In the lower-level problem, the follower schedules the selected jobs on parallel identical machines to minimize the makespan, solved via integer programming using Gurobi~\cite{gurobi}.
+In the upper-level problem, the leader selects quantities of job types within a budget constraint to maximize the makespan.
+In the lower-level problem, the follower schedules the selected jobs on parallel identical machines to minimize the makespan.
 We develop a branch-and-bound algorithm that exploits the hierarchical structure of this bilevel problem.
-The algorithm employs two upper bounding techniques: a knapsack-scheduling relaxation that optimally solves a continuous allocation problem, and a Max-LPT approach that provides a $\frac{3}{4}$-approximation guarantee by combining longest processing time scheduling with knapsack optimization.
+To prune, we derive two different upper bounding techniques: a knapsack-scheduling relaxation that optimally solves a continuous allocation problem, and a Max-LPT approach that provides a $\frac{3}{4}$-approximation guarantee by combining longest processing time scheduling with knapsack optimization.
 Computational experiments compare both bounding approaches against complete enumeration and against the MIBS solver from the literature.
 
 \textbf{Keywords:} Bilevel optimization, branch-and-bound, knapsack problem, scheduling, combinatorial optimization
