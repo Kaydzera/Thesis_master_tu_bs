@@ -11,7 +11,7 @@ The main contributions are:
     \item Development of a branch-and-bound algorithm with efficient pruning, utilizing both ceiling knapsack and MaxLPT bounds, and incorporating an early optimality detection mechanism that can solve certain instances directly at the root node.
     \item Implementation of dynamic programming for bound computation and incremental LPT scheduling for fast makespan evaluation.
     \item Integration of Gurobi~\cite{gurobi} for solving integer programming subproblems, ensuring optimality in the follower's schedule.
-    \item Comprehensive computational study demonstrating practical scalability, pruning effectiveness, and comparison to baseline enumeration.
+    \item Comprehensive computational study demonstrating practical scalability, pruning effectiveness, and correctness across a wide range of instance types and parameters, including comparisons to the general-purpose MIBS solver.
 \end{itemize}
 
 \section{Key Results and Insights}
@@ -20,7 +20,7 @@ The main contributions are:
     \item The branch-and-bound algorithm achieves substantial speedups over complete enumeration, successfully solving instances with up to 26 job types and 12 machines, and demonstrating scalability beyond these sizes in certain cases.
     \item Tight bounds from knapsack scheduling relaxation and LPT rule enable effective pruning, reducing the search space and improving efficiency.
     \item The modular implementation supports efficient node expansion, incremental updates, and memory savings compared to breadth-first approaches.
-    \item Gurobi integration ensures that the follower's scheduling problem is solved optimally, validating the correctness of the approach.
+    \item Gurobis~\cite{gurobi} integration ensures that the follower's scheduling problem is solved optimally using state-of-the-art integer programming techniques, contributing to the overall performance of the algorithm.
     \item Computational experiments confirm the algorithm's robustness across diverse instance types, including uniform, high variance, and correlated job structures.
 \end{itemize}
 
@@ -28,15 +28,15 @@ The main contributions are:
 
 \begin{itemize}
     \item The LPT rule provides a $\frac{4}{3}$-approximation for makespan bounds, which may slightly overestimate contributions from decided items.
-    \item There is currently no theory guaranteeing for which instances the optimal solution can be found at the root node, so worst-case complexity remains exponential.
-    \item Scalability is limited for very large instances (e.g., 12+ job types or extreme budget/machine counts) due to exponential complexity if the solution cannot be obtained at the root node.
+    \item There is currently no theory guaranteeing for which instances the optimal solution can be found at the root node. 
+    \item Scalability is limited for very large instances (e.g., 30+ job types or extreme budget/machine counts) due to exponential complexity if the solution cannot be obtained at the root node.
     \item The current model focuses solely on makespan; real-world applications may require multi-objective optimization (cost, energy, risk distribution).
 \end{itemize}
 
 \section{Future Directions}
 
 \begin{itemize}
-    \item Algorithmic improvements: Enhanced pruning, symmetry breaking, learning-based node selection, and parallel search.
+    \item Algorithmic improvements: Enhanced pruning, symmetry breaking and parallelization.
     \item Theoretical analysis: Characterization of instance properties that allow optimal solutions at the root node.
     \item Problem extensions: Unrelated machines, precedence constraints, stochastic processing times, and multi-objective formulations.
     \item Application areas: Production scheduling, capacity planning, project management, and resource allocation under uncertainty.
@@ -45,6 +45,16 @@ The main contributions are:
 
 \section{Closing Remarks}
 
-Bilevel optimization is a powerful framework for hierarchical decision-making under uncertainty. This thesis demonstrates that combining principled search, tight bounding, and efficient pruning enables practical solution of complex adversarial scheduling problems. The branch-and-bound approach, supported by dynamic programming and integer programming solvers, provides a solid foundation for future research and real-world deployment.
+This thesis addressed the Bilevel Parallel Machine Scheduling problem with Adversarial Job Selection, 
+a challenging hierarchical optimization problem that integrates leader-level unbounded knapsack selection with follower-level optimal scheduling. 
+The work provided a formal mathematical model, clarified the adversarial structure, and analyzed the inherent computational complexity of the problem.
 
-The methodology is viable for deployment in operational systems, as confirmed by substantial speedups and scalability in computational experiments. Future work should focus on scaling to even larger instances through parallelization and exploring richer problem variants that capture additional real-world complexities. The foundation established here provides a solid platform for such extensions.
+The main contribution is the development of a dedicated branch-and-bound algorithm that leverages both ceiling knapsack and MaxLPT bounds for effective pruning. 
+The algorithm incorporates an early optimality detection mechanism, dynamic programming for bound computation, 
+and incremental LPT scheduling for efficient makespan evaluation. Integration with integer programming solvers ensures that the follower's scheduling problem is solved to optimality at each node.
+
+Comprehensive computational experiments demonstrated that the proposed approach achieves substantial speedups over state-of-the-art methods like MIBS,
+ scales to problem sizes beyond the reach of naive methods, and robustly handles a wide range of instance types and parameter settings. 
+ The results highlight the effectiveness of tight bounding and principled search in reducing the search space and enabling the solution of complex adversarial scheduling problems that were previously intractable.
+
+Overall, this work establishes a rigorous algorithmic and computational foundation for bilevel knapsack-scheduling problems, providing new insights into their structure and tractability. 

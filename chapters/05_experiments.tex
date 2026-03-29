@@ -150,26 +150,52 @@ and the number of instances that were generated until the problem was not solved
 \textbf{Fixed parameters:} 10 machines, budget multiplier 2.5
 
 
-Table~\ref{tab:sensitivity-jobs} summarizes the results for increasing the number of job types.
 
+Tables~\ref{tab:sensitivity-jobs-ceil} and~\ref{tab:sensitivity-jobs-maxlpt} summarize the results for increasing the number of job types using the Ceil and MaxLPT approaches, respectively.
+
+% Ceil approach table
 \begin{table}[htbp]
 \centering
-\caption{Sensitivity analysis: scaling number of job types}
-\label{tab:sensitivity-jobs}
+\caption{Sensitivity analysis (Ceil): scaling number of job types}
+\label{tab:sensitivity-jobs-ceil}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{lrrrrrrrrrrrrrrrrrrr}
+\begin{tabular}{lrrrrrrrrr}
 \toprule
-parameter & value & ceil\_RT & ceil\_nodes & ceil\_leaf\_TO & MaxLPT\_RT & maxlpt\_nodes & maxLPT\_leaf\_TO & node\_reduction & speedup & \#root\_solves & ceil\_TO & maxLPT\_TO \\
+parameter & value & ceil\_RT & ceil\_nodes & ceil\_leaf\_TO & node\_reduction & speedup & \#root\_solves & ceil\_TO \\
 \midrule
-jobs & 12.0 & 3928.0 & 38283828 & False & 89.5 & 1365976 & False & 96.43\% & 43.91 & 2 & True & False \\
-jobs & 14.0 & 244.9 & 3473779 & False & 62.4 & 860687 & False & 75.22\% & 3.93 & 5 & False & False \\
-jobs & 16.0 & 4291.0 & 44592513 & False & 1833.0 & 23428781 & False & 47.46\% & 2.34 & 0 & True & False \\
-jobs & 18.0 & 3967.2 & 56670416 & False & 340.2 & 6837448 & False & 87.93\% & 11.66 & 3 & True & False \\
-jobs & 20.0 & 3981.7 & 55896770 & False & 131.1 & 400892 & False & 99.28\% & 30.37 & 4 & True & False \\
-jobs & 22.0 & 3989.2 & 55394233 & False & 93.9 & 268123 & False & 99.52\% & 42.50 & 0 & True & False \\
-jobs & 24.0 & 4080.5 & 58167454 & False & 139.6 & 3102853 & False & 94.67\% & 29.23 & 14 & True & False \\
-jobs & 26.0 & 4030.8 & 54780931 & False & 127.8 & 436990 & False & 99.20\% & 31.53 & 10 & True & False \\
-jobs & 28.0 & 4018.7 & 52662106 & False & 3949.0 & 49055446 & True & 6.85\% & 1.02 & 0 & True & True \\
+jobs & 12.0 & 3928.99 & 38283828 & False & 96.43\% & 43.91 & 2 & True \\
+jobs & 14.0 & 244.92 & 3473779 & False & 75.22\% & 3.93 & 5 & False \\
+jobs & 16.0 & 4290.98 & 44592513 & False & 47.46\% & 2.34 & 0 & True \\
+jobs & 18.0 & 3967.16 & 56670416 & False & 87.93\% & 11.66 & 3 & True \\
+jobs & 20.0 & 3981.72 & 55896770 & False & 99.28\% & 30.37 & 4 & True \\
+jobs & 22.0 & 3989.21 & 55394233 & False & 99.52\% & 42.50 & 0 & True \\
+jobs & 24.0 & 4080.52 & 58167454 & False & 94.67\% & 29.23 & 14 & True \\
+jobs & 26.0 & 4030.76 & 54780931 & False & 99.20\% & 31.53 & 10 & True \\
+jobs & 28.0 & 4018.66 & 52662106 & False & 6.85\% & 1.02 & 0 & True \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+% MaxLPT approach table
+\begin{table}[htbp]
+\centering
+\caption{Sensitivity analysis (MaxLPT): scaling number of job types}
+\label{tab:sensitivity-jobs-maxlpt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+parameter & value & MaxLPT\_RT & maxlpt\_nodes & maxLPT\_leaf\_TO & node\_reduction & speedup & \#root\_solves & maxLPT\_TO \\
+\midrule
+jobs & 12.0 & 89.46 & 1365976 & False & 96.43\% & 43.91 & 2 & False \\
+jobs & 14.0 & 62.39 & 860687 & False & 75.22\% & 3.93 & 5 & False \\
+jobs & 16.0 & 1832.99 & 23428781 & False & 47.46\% & 2.34 & 0 & False \\
+jobs & 18.0 & 340.18 & 6837448 & False & 87.93\% & 11.66 & 3 & False \\
+jobs & 20.0 & 131.13 & 400892 & False & 99.28\% & 30.37 & 4 & False \\
+jobs & 22.0 & 93.85 & 268123 & False & 99.52\% & 42.50 & 0 & False \\
+jobs & 24.0 & 139.62 & 3102853 & False & 94.67\% & 29.23 & 14 & False \\
+jobs & 26.0 & 127.82 & 436990 & False & 99.20\% & 31.53 & 10 & False \\
+jobs & 28.0 & 3949.04 & 49055446 & True & 6.85\% & 1.02 & 0 & True \\
 \bottomrule
 \end{tabular}%
 }
@@ -184,19 +210,38 @@ jobs & 28.0 & 4018.7 & 52662106 & False & 3949.0 & 49055446 & True & 6.85\% & 1.
 \textbf{Fixed parameters:} 20 job types, budget multiplier 2.5
 
 
-Table~\ref{tab:sensitivity-machines} summarizes the results for increasing the number of machines.
 
+Tables~\ref{tab:sensitivity-machines-ceil} and~\ref{tab:sensitivity-machines-maxlpt} summarize the results for increasing the number of machines using the Ceil and MaxLPT approaches, respectively.
+
+% Ceil approach table
 \begin{table}[htbp]
 \centering
-\caption{Sensitivity analysis: scaling number of machines}
-\label{tab:sensitivity-machines}
+\caption{Sensitivity analysis (Ceil): scaling number of machines}
+\label{tab:sensitivity-machines-ceil}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{lrrrrrrrrrrrrrrrrrrr}
+\begin{tabular}{lrrrrrrrrr}
 \toprule
-parameter & value & ceil\_RT & ceil\_nodes & ceil\_leaf\_TO & MaxLPT\_RT & maxlpt\_nodes & maxLPT\_leaf\_TO & node\_reduction & speedup & \#root\_solves & ceil\_TO & maxLPT\_TO \\
+parameter & value & ceil\_RT & ceil\_nodes & ceil\_leaf\_TO & node\_reduction & speedup & \#root\_solves & ceil\_TO \\
 \midrule
-machines & 11 & 4145.1 & 47616691 & False & 370.2 & 3977835 & False & 91.65\% & 11.20 & 0 & True & False \\
-machines & 12 & 3607.7 & 1305044 & False & 3609.8 & 1495094 & True & -14.56\% & 1.00 & 5 & True & True \\
+machines & 11 & 4145.08 & 47616691 & False & 91.65\% & 11.20 & 0 & True \\
+machines & 12 & 3607.73 & 1305044 & False & -14.56\% & 1.00 & 5 & True \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+% MaxLPT approach table
+\begin{table}[htbp]
+\centering
+\caption{Sensitivity analysis (MaxLPT): scaling number of machines}
+\label{tab:sensitivity-machines-maxlpt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+parameter & value & MaxLPT\_RT & maxlpt\_nodes & maxLPT\_leaf\_TO & node\_reduction & speedup & \#root\_solves & maxLPT\_TO \\
+\midrule
+machines & 11 & 370.24 & 3977835 & False & 91.65\% & 11.20 & 0 & False \\
+machines & 12 & 3609.80 & 1495094 & True & -14.56\% & 1.00 & 5 & True \\
 \bottomrule
 \end{tabular}%
 }
@@ -209,23 +254,44 @@ machines & 12 & 3607.7 & 1305044 & False & 3609.8 & 1495094 & True & -14.56\% & 
 \textbf{Fixed parameters:} 20 job types, 10 machines
 
 
-Table~\ref{tab:sensitivity-budget} summarizes the results for increasing the budget multiplier.
+
+Tables~\ref{tab:sensitivity-budget-ceil} and~\ref{tab:sensitivity-budget-maxlpt} summarize the results for increasing the budget multiplier using the Ceil and MaxLPT approaches, respectively.
 
 Budget is calculated as: $B = \text{multiplier} \times \sum_i p_i$
 
+% Ceil approach table
 \begin{table}[htbp]
 \centering
-\caption{Sensitivity analysis: scaling budget multiplier}
-\label{tab:sensitivity-budget}
+\caption{Sensitivity analysis (Ceil): scaling budget multiplier}
+\label{tab:sensitivity-budget-ceil}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{lrrrrrrrrrrrrrrrrrrr}
+\begin{tabular}{lrrrrrrrrr}
 \toprule
-parameter & value & ceil\_RT & ceil\_nodes & ceil\_leaf\_TO & MaxLPT\_RT & maxlpt\_nodes & maxLPT\_leaf\_TO & node\_reduction & speedup & \#root\_solves & ceil\_TO & maxLPT\_TO \\
+parameter & value & ceil\_RT & ceil\_nodes & ceil\_leaf\_TO & node\_reduction & speedup & \#root\_solves & ceil\_TO \\
 \midrule
-budget & 4.0 & 4028.9 & 20932694 & False & 568.2 & 696938 & False & 96.67\% & 7.09 & 4 & True & False \\
-budget & 5.0 & 3879.0 & 34248348 & False & 2702.1 & 25266723 & False & 26.22\% & 1.44 & 1 & True & False \\
-budget & 6.0 & 3727.2 & 9958262 & False & 2177.3 & 10081710 & False & -1.24\% & 1.71 & 12 & True & False \\
-budget & 7.0 & 4057.5 & 44522090 & False & 4043.4 & 54110812 & True & -21.54\% & 1.00 & 18 & True & True \\
+budget & 4.0 & 4028.85 & 20932694 & False & 96.67\% & 7.09 & 4 & True \\
+budget & 5.0 & 3878.96 & 34248348 & False & 26.22\% & 1.44 & 1 & True \\
+budget & 6.0 & 3727.23 & 9958262 & False & -1.24\% & 1.71 & 12 & True \\
+budget & 7.0 & 4057.53 & 44522090 & False & -21.54\% & 1.00 & 18 & True \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+% MaxLPT approach table
+\begin{table}[htbp]
+\centering
+\caption{Sensitivity analysis (MaxLPT): scaling budget multiplier}
+\label{tab:sensitivity-budget-maxlpt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+parameter & value & MaxLPT\_RT & maxlpt\_nodes & maxLPT\_leaf\_TO & node\_reduction & speedup & \#root\_solves & maxLPT\_TO \\
+\midrule
+budget & 4.0 & 568.21 & 696938 & False & 96.67\% & 7.09 & 4 & False \\
+budget & 5.0 & 2702.05 & 25266723 & False & 26.22\% & 1.44 & 1 & False \\
+budget & 6.0 & 2177.28 & 10081710 & False & -1.24\% & 1.71 & 12 & False \\
+budget & 7.0 & 4043.36 & 54110812 & True & -21.54\% & 1.00 & 18 & True \\
 \bottomrule
 \end{tabular}%
 }
@@ -269,7 +335,7 @@ Table~\ref{tab:grid-status-summary} summarizes the solution status counts for ea
 
 \begin{table}[htbp]
 \centering
-\caption{Status distribution for grid sensitivity (Ceiling vs MaxLPT bound, all instances)}
+\caption{Status distribution for grid sensitivity (Ceiling - MaxLPT bound, all instances)}
 \label{tab:grid-status-summary}
 \begin{tabular}{c|c|c|c|c}
 \toprule
@@ -320,11 +386,10 @@ Overall, there were 61 such instances where both bounds completed, allowing for 
 
 \paragraph{Interpretation.}
 The MaxLPT bound is almost always more efficient in terms of node count, 
-exploring fewer nodes in every case. In terms of runtime, MaxLPT is faster in the majority of instances, 
-with a much larger average speedup when it is faster. 
+exploring fewer nodes in every case. In terms of runtime, MaxLPT is faster in the majority of instances and in the few cases where the ceiling bound is faster, the difference is negligible (on average $-$0.06 seconds). 
+If the MaxLPT bound is faster, the average speedup is substantial (106.23 seconds). The few cases where the ceiling bound is faster are likely due to the overhead of computing the MaxLPT bound, but these cases are rare and the differences are minimal.
 The average absolute time difference is dominated by a few hard cases where MaxLPT provides a dramatic speedup. 
-When Ceiling is faster, the difference is very small (on average $-$0.06 seconds), 
-indicating that the computational overhead of MaxLPT is negligible or even beneficial in practice. 
+This indicates that the computational overhead of MaxLPT is negligible or even beneficial in practice. 
 These results confirm that MaxLPT is the preferred bound for both efficiency and robustness in challenging bilevel knapsack-scheduling problems.
 
 % --- Root-Optimal Case: Runtime Comparison ---
@@ -354,235 +419,241 @@ For root-optimal instances, both bounds are extremely fast,
 with typical runtimes well below a second. 
 The ceiling bound is slightly faster on average because the MaxLPT bound precomputes several dynamic programming tables, but the differences are negligible in practice. 
 The small negative mean and median indicate that the ceiling bound has a minor edge in these trivial cases, 
-but the MaxLPT bound is only marginally slower (and sometimes faster). 
+but the MaxLPT bound is only marginally slower (and sometimes faster, which is likely due to natural runtime fluctuations, as the observed differences are very small and only occur for trivial instances). 
 Since no branching occurs, the computational cost is dominated by the computatation of the dynamic programming tables and the solution of the scheduling problem. 
 
 
 
 
-
-
-
 \section{Difficulty Analysis by Parameter Configuration}
-To comprehend how the difficulty scales when altering the nuber of job types and machines, we present a scatter plot of the MaxLPT bound runtimes on a log scale, with color indicating the number of machines.
 
-We can see that generally the difficulty scales the same for both bounds. Lower numbers of job types and machines are easier, while higher numbers lead to more timeouts. The MaxLPT bound is more robust, with fewer timeouts at higher parameter values, but the overall trend is similar for both bounds. 
-This suggests that the underlying problem difficulty is primarily driven by the combinatorial explosion of possibilities as job types and machines increase, and while MaxLPT provides better pruning, it cannot fully mitigate the exponential growth in complexity.
+Finally, we exclusively analyzed the instances that were not solved at the root node to understand how difficulty scales with the number of job types and machines over all budget multipliers.
+To show how the difficulty scales when altering the number of job types and machines, we present scatter plots of the MaxLPT and Ceiling bound runtimes on a log scale, with color indicating the number of machines.
+We can see that generally the difficulty scales the same for both bounds. 
+Lower numbers of job types and machines are easier, while higher numbers lead to more timeouts. 
+The MaxLPT bound is more robust, with fewer timeouts at higher parameter values, but the overall trend is similar for both bounds. 
+This suggests that the underlying problem difficulty is primarily driven by the combinatorial explosion of possibilities as job types and machines increase, 
+and while MaxLPT provides better pruning, it cannot fully mitigate the exponential growth in complexity.
 
+% --- MaxLPT Bound Runtime Figure ---
+\begin{figure}[htbp]
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                title={MaxLPT Bound Runtime},
+                xlabel={Number of Job Types},
+                ylabel={Runtime (s)},
+                ymode=log,
+                log basis y=10,
+                scatter,
+                only marks,
+                colorbar,
+                colormap/viridis,
+                point meta=explicit,
+                point meta min=2,
+                point meta max=12,
+                colorbar style={title=Machines},
+        ]
+        \addplot+[scatter, scatter src=explicit, mark=*] coordinates {
+                (16, 0.0182) [2]
+                (16, 0.0105) [2]
+                (24, 0.0416) [2]
+                (24, 0.025) [2]
+                (12, 0.0988) [4]
+                (16, 0.0662) [4]
+                (24, 0.1248) [4]
+                (12, 1.3044) [6]
+                (16, 0.1286) [6]
+                (16, 10.6183) [6]
+                (20, 7.9195) [6]
+                (24, 6.8195) [6]
+                (24, 0.2759) [6]
+                (12, 11.1834) [8]
+                (20, 1.1375) [8]
+                (20, 33.3731) [8]
+                (24, 146.0864) [8]
+                (16, 27.9256) [10]
+                (16, 152.9347) [10]
+                (24, 5.5397) [10]
+                (24, 166.4686) [10]
+                (4, 1.1428) [12]
+                (8, 134.0008) [12]
+                (8, 9.0288) [12]
+                (16, 886.4828) [12]
+                (20, 419.6588) [12]
+                (8, 0.01) [2]
+                (20, 0.0485) [2]
+                (20, 0.0525) [2]
+                (24, 0.082) [2]
+                (12, 0.3205) [4]
+                (12, 0.6696) [4]
+                (20, 3.129) [4]
+                (20, 0.3225) [4]
+                (4, 0.1045) [6]
+                (16, 1.4428) [6]
+                (24, 25.2229) [6]
+                (12, 74.7526) [8]
+                (16, 15.0727) [8]
+                (16, 54.9436) [8]
+                (16, 54.5988) [8]
+                (20, 4000.0) [8]
+                (20, 356.9652) [8]
+                (8, 28.0501) [10]
+                (12, 4000.0) [10]
+                (12, 301.0861) [10]
+                (16, 2.8157) [10]
+                (16, 3.589) [10]
+                (16, 4000.0) [10]
+                (20, 27.9108) [10]
+                (24, 4000.0) [10]
+                (8, 4000.0) [12]
+                (12, 4000.0) [12]
+                (16, 59.3459) [12]
+                (16, 4000.0) [12]
+                (24, 4000.0) [12]
+                (12, 0.0465) [2]
+                (16, 0.091) [2]
+                (20, 0.1245) [2]
+                (24, 0.1695) [2]
+                (24, 0.189) [2]
+                (4, 0.1745) [4]
+                (16, 3.521) [4]
+                (20, 0.7055) [4]
+                (24, 13.8768) [4]
+                (4, 0.1813) [6]
+                (8, 62.798) [6]
+                (8, 738.8477) [6]
+                (8, 0.3796) [6]
+                (12, 8.4563) [6]
+                (16, 121.6772) [6]
+                (16, 11.6554) [6]
+                (20, 12.1949) [6]
+                (24, 23.868) [6]
+                (4, 2.0159) [8]
+                (4, 6.7873) [8]
+                (24, 812.5187) [8]
+                (4, 0.5461) [10]
+                (20, 4000.0) [10]
+                (20, 372.8375) [10]
+                (24, 4000.0) [10]
+                (24, 4000.0) [10]
+                (16, 4000.0) [12]
+        };
+        \end{axis}
+        \end{tikzpicture}
+        \caption{Runtime of the MaxLPT bound on a logarithmic scale for varying numbers of job types and machines.}
+        \label{fig:maxlpt-runtime}
+\end{figure}
 
-
-% PGFPlots scatter plot for MaxLPT bound (log scale, color = machines)
-\begin{tikzpicture}
-  \begin{axis}[
-    title={MaxLPT Bound Runtime}, % <-- add this line
-    xlabel={Number of Job Types},
-    ylabel={Runtime (s)},
-    ymode=log,
-    log basis y=10,
-    scatter,
-    only marks,
-    colorbar,
-    colormap/viridis,
-    point meta=explicit,
-    point meta min=2,
-    point meta max=12,
-    colorbar style={title=Machines},
-]
-\addplot+[scatter, scatter src=explicit, mark=*] coordinates {
-    (16, 0.0182) [2]
-    (16, 0.0105) [2]
-    (24, 0.0416) [2]
-    (24, 0.025) [2]
-    (12, 0.0988) [4]
-    (16, 0.0662) [4]
-    (24, 0.1248) [4]
-    (12, 1.3044) [6]
-    (16, 0.1286) [6]
-    (16, 10.6183) [6]
-    (20, 7.9195) [6]
-    (24, 6.8195) [6]
-    (24, 0.2759) [6]
-    (12, 11.1834) [8]
-    (20, 1.1375) [8]
-    (20, 33.3731) [8]
-    (24, 146.0864) [8]
-    (16, 27.9256) [10]
-    (16, 152.9347) [10]
-    (24, 5.5397) [10]
-    (24, 166.4686) [10]
-    (4, 1.1428) [12]
-    (8, 134.0008) [12]
-    (8, 9.0288) [12]
-    (16, 886.4828) [12]
-    (20, 419.6588) [12]
-    (8, 0.01) [2]
-    (20, 0.0485) [2]
-    (20, 0.0525) [2]
-    (24, 0.082) [2]
-    (12, 0.3205) [4]
-    (12, 0.6696) [4]
-    (20, 3.129) [4]
-    (20, 0.3225) [4]
-    (4, 0.1045) [6]
-    (16, 1.4428) [6]
-    (24, 25.2229) [6]
-    (12, 74.7526) [8]
-    (16, 15.0727) [8]
-    (16, 54.9436) [8]
-    (16, 54.5988) [8]
-    (20, 4000.0) [8]
-    (20, 356.9652) [8]
-    (8, 28.0501) [10]
-    (12, 4000.0) [10]
-    (12, 301.0861) [10]
-    (16, 2.8157) [10]
-    (16, 3.589) [10]
-    (16, 4000.0) [10]
-    (20, 27.9108) [10]
-    (24, 4000.0) [10]
-    (8, 4000.0) [12]
-    (12, 4000.0) [12]
-    (16, 59.3459) [12]
-    (16, 4000.0) [12]
-    (24, 4000.0) [12]
-    (12, 0.0465) [2]
-    (16, 0.091) [2]
-    (20, 0.1245) [2]
-    (24, 0.1695) [2]
-    (24, 0.189) [2]
-    (4, 0.1745) [4]
-    (16, 3.521) [4]
-    (20, 0.7055) [4]
-    (24, 13.8768) [4]
-    (4, 0.1813) [6]
-    (8, 62.798) [6]
-    (8, 738.8477) [6]
-    (8, 0.3796) [6]
-    (12, 8.4563) [6]
-    (16, 121.6772) [6]
-    (16, 11.6554) [6]
-    (20, 12.1949) [6]
-    (24, 23.868) [6]
-    (4, 2.0159) [8]
-    (4, 6.7873) [8]
-    (24, 812.5187) [8]
-    (4, 0.5461) [10]
-    (20, 4000.0) [10]
-    (20, 372.8375) [10]
-    (24, 4000.0) [10]
-    (24, 4000.0) [10]
-    (16, 4000.0) [12]
-};
-\end{axis}
-\end{tikzpicture}
-
-
-
-
-
-\begin{tikzpicture}
-  \begin{axis}[
-    title={Ceiling Bound Runtime}, % <-- add this line
-    xlabel={Number of Job Types},
-    ylabel={Runtime (s)},
-    ymode=log,
-    log basis y=10,
-    scatter,
-    only marks,
-    colorbar,
-    colormap/viridis,
-    point meta=explicit,
-    point meta min=2,
-    point meta max=12,
-    colorbar style={title=Machines},
-]
-\addplot+[scatter, scatter src=explicit, mark=*] coordinates {
-  (16, 0.032) [2]
-  (16, 0.006) [2]
-  (24, 0.0357) [2]
-  (24, 0.0092) [2]
-  (12, 0.4031) [4]
-  (16, 0.052) [4]
-  (24, 0.5177) [4]
-  (12, 1.3901) [6]
-  (16, 0.3318) [6]
-  (16, 15.2217) [6]
-  (20, 10.6272) [6]
-  (24, 19.8689) [6]
-  (24, 9.1159) [6]
-  (12, 17.749) [8]
-  (20, 77.5325) [8]
-  (20, 187.4866) [8]
-  (24, 1118.0895) [8]
-  (16, 581.2494) [10]
-  (16, 280.6567) [10]
-  (24, 4000.0) [10]
-  (24, 4000.0) [10]
-  (4, 1.2598) [12]
-  (8, 171.9408) [12]
-  (8, 9.3577) [12]
-  (16, 4000.0) [12]
-  (20, 4000.0) [12]
-  (8, 0.008) [2]
-  (20, 0.013) [2]
-  (20, 0.022) [2]
-  (24, 0.0495) [2]
-  (12, 0.4621) [4]
-  (12, 1.1329) [4]
-  (20, 5.4911) [4]
-  (20, 5.3477) [4]
-  (4, 0.098) [6]
-  (16, 7.8603) [6]
-  (24, 812.5306) [6]
-  (12, 87.9254) [8]
-  (16, 1072.3847) [8]
-  (16, 4000.0) [8]
-  (16, 59.2007) [8]
-  (20, 4000.0) [8]
-  (20, 424.4042) [8]
-  (8, 31.7028) [10]
-  (12, 4000.0) [10]
-  (12, 332.3862) [10]
-  (16, 37.0049) [10]
-  (16, 23.9673) [10]
-  (16, 4000.0) [10]
-  (20, 4000.0) [10]
-  (24, 4000.0) [10]
-  (8, 4000.0) [12]
-  (12, 4000.0) [12]
-  (16, 4000.0) [12]
-  (16, 4000.0) [12]
-  (24, 4000.0) [12]
-  (12, 0.017) [2]
-  (16, 0.03) [2]
-  (20, 0.0565) [2]
-  (24, 0.025) [2]
-  (24, 0.0295) [2]
-  (4, 0.17) [4]
-  (16, 3.8339) [4]
-  (20, 0.2796) [4]
-  (24, 34.4973) [4]
-  (4, 0.1523) [6]
-  (8, 128.1041) [6]
-  (8, 738.7361) [6]
-  (8, 0.5612) [6]
-  (12, 9.0039) [6]
-  (16, 4000.0) [6]
-  (16, 117.4959) [6]
-  (20, 22.4699) [6]
-  (24, 183.9209) [6]
-  (4, 1.9905) [8]
-  (4, 6.7911) [8]
-  (24, 4000.0) [8]
-  (4, 0.5241) [10]
-  (20, 4000.0) [10]
-  (20, 4000.0) [10]
-  (24, 4000.0) [10]
-  (24, 4000.0) [10]
-  (16, 4000.0) [12]
-};
-\end{axis}
-\end{tikzpicture}
+% --- Ceiling Bound Runtime Figure ---
+\begin{figure}[htbp]
+        \centering
+        \begin{tikzpicture}
+            \begin{axis}[
+                title={Ceiling Bound Runtime},
+                xlabel={Number of Job Types},
+                ylabel={Runtime (s)},
+                ymode=log,
+                log basis y=10,
+                scatter,
+                only marks,
+                colorbar,
+                colormap/viridis,
+                point meta=explicit,
+                point meta min=2,
+                point meta max=12,
+                colorbar style={title=Machines},
+        ]
+        \addplot+[scatter, scatter src=explicit, mark=*] coordinates {
+            (16, 0.032) [2]
+            (16, 0.006) [2]
+            (24, 0.0357) [2]
+            (24, 0.0092) [2]
+            (12, 0.4031) [4]
+            (16, 0.052) [4]
+            (24, 0.5177) [4]
+            (12, 1.3901) [6]
+            (16, 0.3318) [6]
+            (16, 15.2217) [6]
+            (20, 10.6272) [6]
+            (24, 19.8689) [6]
+            (24, 9.1159) [6]
+            (12, 17.749) [8]
+            (20, 77.5325) [8]
+            (20, 187.4866) [8]
+            (24, 1118.0895) [8]
+            (16, 581.2494) [10]
+            (16, 280.6567) [10]
+            (24, 4000.0) [10]
+            (24, 4000.0) [10]
+            (4, 1.2598) [12]
+            (8, 171.9408) [12]
+            (8, 9.3577) [12]
+            (16, 4000.0) [12]
+            (20, 4000.0) [12]
+            (8, 0.008) [2]
+            (20, 0.013) [2]
+            (20, 0.022) [2]
+            (24, 0.0495) [2]
+            (12, 0.4621) [4]
+            (12, 1.1329) [4]
+            (20, 5.4911) [4]
+            (20, 5.3477) [4]
+            (4, 0.098) [6]
+            (16, 7.8603) [6]
+            (24, 812.5306) [6]
+            (12, 87.9254) [8]
+            (16, 1072.3847) [8]
+            (16, 4000.0) [8]
+            (16, 59.2007) [8]
+            (20, 4000.0) [8]
+            (20, 424.4042) [8]
+            (8, 31.7028) [10]
+            (12, 4000.0) [10]
+            (12, 332.3862) [10]
+            (16, 37.0049) [10]
+            (16, 23.9673) [10]
+            (16, 4000.0) [10]
+            (20, 4000.0) [10]
+            (24, 4000.0) [10]
+            (8, 4000.0) [12]
+            (12, 4000.0) [12]
+            (16, 4000.0) [12]
+            (16, 4000.0) [12]
+            (24, 4000.0) [12]
+            (12, 0.017) [2]
+            (16, 0.03) [2]
+            (20, 0.0565) [2]
+            (24, 0.025) [2]
+            (24, 0.0295) [2]
+            (4, 0.17) [4]
+            (16, 3.8339) [4]
+            (20, 0.2796) [4]
+            (24, 34.4973) [4]
+            (4, 0.1523) [6]
+            (8, 128.1041) [6]
+            (8, 738.7361) [6]
+            (8, 0.5612) [6]
+            (12, 9.0039) [6]
+            (16, 4000.0) [6]
+            (16, 117.4959) [6]
+            (20, 22.4699) [6]
+            (24, 183.9209) [6]
+            (4, 1.9905) [8]
+            (4, 6.7911) [8]
+            (24, 4000.0) [8]
+            (4, 0.5241) [10]
+            (20, 4000.0) [10]
+            (20, 4000.0) [10]
+            (24, 4000.0) [10]
+            (24, 4000.0) [10]
+            (16, 4000.0) [12]
+        };
+        \end{axis}
+        \end{tikzpicture}
+        \caption{Runtime of the ceiling bound on a logarithmic scale for varying numbers of job types and machines.}
+        \label{fig:ceiling-runtime}
+\end{figure}
 
 
 \section{Comparison with MIBS Solver}
@@ -607,7 +678,7 @@ This design allows us to systematically evaluate both solvers across a broad spe
 
 \subsection{Results}
 
-Out of the 180 instances tested, the MIBS failed to solve 145 instances within the same limit. 
+Out of the 180 instances tested, the MIBS failed to solve 145 instances within the time limit. 
 For the instances that MIBS solved successfully, the table \ref{tab:mibs-success-grid} summarizes the number of successful solves by MIBS for each combination of machines $m$ and job types $j$, aggregated across all budget multipliers.
 \begin{table}[htbp]
 \centering
@@ -627,7 +698,7 @@ $m$ $\backslash$ $j$ & 4 & 8 & 16 & 20 \\
 We can conclude that MIBS performs reasonably well on smaller instances (4 machines, 4 job types), 
 but struggles significantly as the problem size increases, particularly with more job types. 
 In contrast, our specialized branch-and-bound algorithm with the maxLPT bound
-successfully solved 179/180 instances within the time limit, demonstrating its superior scalability and efficiency for this specific bilevel scheduling problem.
+successfully solved 179/180 of these instances within the time limit, demonstrating its superior scalability and efficiency for this specific bilevel scheduling problem.
 
 \paragraph{Detailed runtime comparison.}
 To quantify the performance gap, we matched all 180 test instances between MIBS and our branch-and-bound approach (Ceiling and MaxLPT bounds) and captured Mean, Median, Min, Max, and Standard Deviation. For each instance, we compared runtimes, assigning 3,600 seconds for any timeout.
@@ -668,8 +739,7 @@ This subsection combines the main practical findings and algorithmic strengths o
     \item \textbf{Scalability:} MIBS struggles with 8+ job types and 8+ machines; our algorithm handles them routinely.
     \item \textbf{Dynamic programming precomputation:} Precomputing all knapsack subproblems once per instance amortizes DP overhead across potentially millions of bound computations. This design choice proved critical for performance.
     \item \textbf{Initialization:} Starting with a high-quality incumbent generated by solving the MaxLPT-problem enables immediate pruning of the entire tree for roughly $84.6\%$ of instances.
-    \item \textbf{Machine count sensitivity:} More machines exponentially increases follower scheduling complexity. Beyond 12 machines, performance degrades significantly for instances not being solved at the root node. Even then, evaluating the scheduling problem remains challenging and can take significant time. This limitation is due to the combinatorial explosion of possible schedules as machines increase and cannot be overcome by exact methods without significant algorithmic innovations or heuristics.
-    \item \textbf{Node limit dependency:} For hard instances, node counts can exceed 100 million before optimality proof. Since the computational cost of evaluating bounds at each node is constant and very low, we can handle such large node counts reasonably well. Future work could explore more aggressive pruning or heuristic guidance to reduce node counts.
+    \item \textbf{Node counts:} For hard instances, node counts can exceed 100 million before optimality proof. Since the computational cost of evaluating bounds at each node is constant and very low, we can handle such large node counts reasonably well. Future work could explore more aggressive pruning or heuristic guidance to reduce node counts.
     \item \textbf{Memory requirements:} Dynamic programming tables grow with budget and job types. For exceptionally large budgets compared to job type costs, memory issues may arise.
 \end{itemize}
 
@@ -680,11 +750,10 @@ This chapter provided an extensive computational evaluation of the proposed bran
 
 \begin{itemize}
     \item \textbf{Correctness:} The algorithm was verified against complete enumeration on 140 diverse benchmark instances, always matching the optimal makespan and dramatically outperforming enumeration in speed (up to six orders of magnitude faster).
-    \item \textbf{Sensitivity analysis:} Systematic scaling of job types, machines, and budget multipliers revealed robust performance across a wide range of parameters. Most instances were solved at the root node, with pruning rates often exceeding 80\%.
+    \item \textbf{Sensitivity analysis:} Systematic scaling of job types, machines, and budget multipliers revealed robust performance across a wide range of parameters. Most instances were solved at the root node, with pruning rates around 84.6\%.
     \item \textbf{Grid experiments:} In a comprehensive grid of 540 instances, both the ceiling and MaxLPT bounds solved over 84\% of cases at the root node. MaxLPT consistently achieved more completed solves and fewer timeouts, especially for harder instances.
     \item \textbf{Bound comparison:} MaxLPT explored fewer nodes in every challenging case and was faster in the majority, with negligible overhead in easy (root-optimal) cases. The computational cost of MaxLPT is justified by its superior pruning and robustness.
-    \item \textbf{MIBS benchmarking:} On a representative subset of 180 grid instances, the general-purpose MIBS solver solved only 35, while the branch-and-bound algorithm (MaxLPT) solved 179. Median speedup over MIBS was nearly the full timeout limit (3,600s), confirming orders-of-magnitude practical advantage.
-    \item \textbf{Scalability limits:} The practical boundary for routine solution is around 26 job types and 12 machines in the case where the budget is proportional to the number of job types and the solution cannot be obtained at the root node, with performance degrading for larger instances due to combinatorial explosion in the follower scheduling problem.
+    \item \textbf{MIBS benchmarking:} On a representative subset of 180 grid instances, the general-purpose MIBS solver solved only 35, while the branch-and-bound algorithm (MaxLPT) solved 179. Median speedup over MIBS was nearly the full timeout limit (3,600s), confirming orders-of-magnitude practical advantage.    
     \item \textbf{Algorithmic insights:} Key design choices—such as dynamic programming precomputation, high-quality incumbent initialization, and efficient upper bounding—were critical for performance and scalability.
 \end{itemize}
 
