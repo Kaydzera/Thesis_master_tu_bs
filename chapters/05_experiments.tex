@@ -160,17 +160,17 @@ Table~\ref{tab:sensitivity-jobs} summarizes the results for increasing the numbe
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lrrrrrrrrrrrrrrrrrrr}
 \toprule
-parameter & value & seed & n\_jobs & m\_machines & budget\_multiplier & ceiling\_runtime & ceiling\_nodes & ceiling\_status & ceiling\_leaf\_timeout & maxlpt\_runtime & maxlpt\_nodes & maxlpt\_status & maxlpt\_leaf\_timeout & node\_reduction\_pct & speedup & root\_solved\_skipped & ceiling\_timeout & maxlpt\_timeout \\
+parameter & value & ceiling\_runtime & ceiling\_nodes & ceiling\_leaf\_timeout & maxlpt\_runtime & maxlpt\_nodes & maxlpt\_leaf\_timeout & node\_reduction\_pct & speedup & root\_solved\_skipped & ceiling\_timeout & maxlpt\_timeout \\
 \midrule
-jobs & 12.0 & 120002 & 12 & 10 & 2.5 & 3928.0 & 38283828 & success & False & 89.5 & 1365976 & success & False & 96.43 & 43.91 & 2 & True & False \\
-jobs & 14.0 & 140005 & 14 & 10 & 2.5 & 244.9 & 3473779 & success & False & 62.4 & 860687 & success & False & 75.22 & 3.93 & 5 & False & False \\
-jobs & 16.0 & 160000 & 16 & 10 & 2.5 & 4291.0 & 44592513 & success & False & 1833.0 & 23428781 & success & False & 47.46 & 2.34 & 0 & True & False \\
-jobs & 18.0 & 180003 & 18 & 10 & 2.5 & 3967.2 & 56670416 & success & False & 340.2 & 6837448 & success & False & 87.93 & 11.66 & 3 & True & False \\
-jobs & 20.0 & 200004 & 20 & 10 & 2.5 & 3981.7 & 55896770 & success & False & 131.1 & 400892 & success & False & 99.28 & 30.37 & 4 & True & False \\
-jobs & 22.0 & 220000 & 22 & 10 & 2.5 & 3989.2 & 55394233 & success & False & 93.9 & 268123 & success & False & 99.52 & 42.50 & 0 & True & False \\
-jobs & 24.0 & 240014 & 24 & 10 & 2.5 & 4080.5 & 58167454 & success & False & 139.6 & 3102853 & success & False & 94.67 & 29.23 & 14 & True & False \\
-jobs & 26.0 & 260010 & 26 & 10 & 2.5 & 4030.8 & 54780931 & success & False & 127.8 & 436990 & success & False & 99.20 & 31.53 & 10 & True & False \\
-jobs & 28.0 & 280000 & 28 & 10 & 2.5 & 4018.7 & 52662106 & success & False & 3949.0 & 49055446 & success & True & 6.85 & 1.02 & 0 & True & True \\
+jobs & 12.0 & 3928.0 & 38283828 & False & 89.5 & 1365976 & False & 96.43 & 43.91 & 2 & True & False \\
+jobs & 14.0 & 244.9 & 3473779 & False & 62.4 & 860687 & False & 75.22 & 3.93 & 5 & False & False \\
+jobs & 16.0 & 4291.0 & 44592513 & False & 1833.0 & 23428781 & False & 47.46 & 2.34 & 0 & True & False \\
+jobs & 18.0 & 3967.2 & 56670416 & False & 340.2 & 6837448 & False & 87.93 & 11.66 & 3 & True & False \\
+jobs & 20.0 & 3981.7 & 55896770 & False & 131.1 & 400892 & False & 99.28 & 30.37 & 4 & True & False \\
+jobs & 22.0 & 3989.2 & 55394233 & False & 93.9 & 268123 & False & 99.52 & 42.50 & 0 & True & False \\
+jobs & 24.0 & 4080.5 & 58167454 & False & 139.6 & 3102853 & False & 94.67 & 29.23 & 14 & True & False \\
+jobs & 26.0 & 4030.8 & 54780931 & False & 127.8 & 436990 & False & 99.20 & 31.53 & 10 & True & False \\
+jobs & 28.0 & 4018.7 & 52662106 & False & 3949.0 & 49055446 & True & 6.85 & 1.02 & 0 & True & True \\
 \bottomrule
 \end{tabular}%
 }
@@ -194,10 +194,10 @@ Table~\ref{tab:sensitivity-machines} summarizes the results for increasing the n
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lrrrrrrrrrrrrrrrrrrr}
 \toprule
-parameter & value & seed & n\_jobs & m\_machines & budget\_multiplier & ceiling\_runtime & ceiling\_nodes & ceiling\_status & ceiling\_leaf\_timeout & maxlpt\_runtime & maxlpt\_nodes & maxlpt\_status & maxlpt\_leaf\_timeout & node\_reduction\_pct & speedup & root\_solved\_skipped & ceiling\_timeout & maxlpt\_timeout \\
+parameter & value & ceiling\_runtime & ceiling\_nodes & ceiling\_leaf\_timeout & maxlpt\_runtime & maxlpt\_nodes & maxlpt\_leaf\_timeout & node\_reduction\_pct & speedup & root\_solved\_skipped & ceiling\_timeout & maxlpt\_timeout \\
 \midrule
-machines & 11 & 110000 & 20 & 11 & 2.5 & 4145.1 & 47616691 & success & False & 370.2 & 3977835 & success & False & 91.65 & 11.20 & 0 & True & False \\
-machines & 12 & 120005 & 20 & 12 & 2.5 & 3607.7 & 1305044 & success & False & 3609.8 & 1495094 & success & True & -14.56 & 1.00 & 5 & True & True \\
+machines & 11 & 4145.1 & 47616691 & False & 370.2 & 3977835 & False & 91.65 & 11.20 & 0 & True & False \\
+machines & 12 & 3607.7 & 1305044 & False & 3609.8 & 1495094 & True & -14.56 & 1.00 & 5 & True & True \\
 \bottomrule
 \end{tabular}%
 }
@@ -221,12 +221,12 @@ Budget is calculated as: $B = \text{multiplier} \times \sum_i p_i$
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lrrrrrrrrrrrrrrrrrrr}
 \toprule
-parameter & value & seed & n\_jobs & m\_machines & budget\_multiplier & ceiling\_runtime & ceiling\_nodes & ceiling\_status & ceiling\_leaf\_timeout & maxlpt\_runtime & maxlpt\_nodes & maxlpt\_status & maxlpt\_leaf\_timeout & node\_reduction\_pct & speedup & root\_solved\_skipped & ceiling\_timeout & maxlpt\_timeout \\
+parameter & value & ceiling\_runtime & ceiling\_nodes & ceiling\_leaf\_timeout & maxlpt\_runtime & maxlpt\_nodes & maxlpt\_leaf\_timeout & node\_reduction\_pct & speedup & root\_solved\_skipped & ceiling\_timeout & maxlpt\_timeout \\
 \midrule
-budget & 4.0 & 40004 & 20 & 10 & 4.0 & 4028.9 & 20932694 & success & False & 568.2 & 696938 & success & False & 96.67 & 7.09 & 4 & True & False \\
-budget & 5.0 & 50001 & 20 & 10 & 5.0 & 3879.0 & 34248348 & success & False & 2702.1 & 25266723 & success & False & 26.22 & 1.44 & 1 & True & False \\
-budget & 6.0 & 60012 & 20 & 10 & 6.0 & 3727.2 & 9958262 & success & False & 2177.3 & 10081710 & success & False & -1.24 & 1.71 & 12 & True & False \\
-budget & 7.0 & 70018 & 20 & 10 & 7.0 & 4057.5 & 44522090 & success & False & 4043.4 & 54110812 & success & True & -21.54 & 1.00 & 18 & True & True \\
+budget & 4.0 & 4028.9 & 20932694 & False & 568.2 & 696938 & False & 96.67 & 7.09 & 4 & True & False \\
+budget & 5.0 & 3879.0 & 34248348 & False & 2702.1 & 25266723 & False & 26.22 & 1.44 & 1 & True & False \\
+budget & 6.0 & 3727.2 & 9958262 & False & 2177.3 & 10081710 & False & -1.24 & 1.71 & 12 & True & False \\
+budget & 7.0 & 4057.5 & 44522090 & False & 4043.4 & 54110812 & True & -21.54 & 1.00 & 18 & True & True \\
 \bottomrule
 \end{tabular}%
 }
