@@ -5,11 +5,14 @@
 \section{Software Architecture}
 
 The implementation is modular, with key components for the branch-and-bound search, problem modeling, and scheduling:
+
 \begin{itemize}
     \item \textbf{models.py:} Data structures for problem instances and search nodes
     \item \textbf{bnb.py:} Branch-and-bound solver with pruning and search tree logic
     \item \textbf{solvers.py:} Scheduling subproblems solved via Gurobi~\cite{gurobi}, version 12.0.3. 
     \item \textbf{bilevel\_gurobi.py:} Complete enumeration baseline for correctness verification
+    \item \textbf{test\_big.py:} Contains the PatternTestSet with seven distinct patterns for instance generation, used in computational experiments.
+    \item \textbf{test\_grid\_sensitivity.py:} Contains the GridTestSet for sensitivity analysis on three different budget multipliers and varies machine counts and number of job types independently.
 \end{itemize}
 
 \section{Key Data Structures}
@@ -30,25 +33,20 @@ class ProblemNode:
     _m: int                       # Number of machines
 \end{lstlisting}
 
+
+
+
 \textbf{Branch types:}
+
+For efficient branching and pruning, each node is classified into one of three types based on how it was generated from its parent:
+
 \begin{itemize}
-    \item \texttt{'root'}: Can create both left and right children; jobs at current depth are not yet distributed to machines.
-    \item \texttt{'right'}: Created by incrementing the current job type; jobs at depth are distributed incrementally to machines.
-    \item \texttt{'left'}: Created by decrementing the current job type; jobs at depth are not distributed, loads are copied unchanged.
+    \item \texttt{'root'}: This node type increased the depth. Can create both left and right children; jobs at current depth are not yet distributed to machines.
+    \item \texttt{'right'}: This node type was created by incrementing the current job type by one; Can create right and lower children; jobs at depth are distributed incrementally to machines by the LPT rule to track makespan contributions.
+    \item \texttt{'left'}: This node type was created by decrementing the current job type by one; Can create left and lower children; jobs at depth are not distributed, loads are copied unchanged. 
+    Jobs at depth are only distributed when evaluating makespan or committing to the next depth level, because when more left children are generated from a left node, the number of job types at the current depth decreases and we would need to recalculate the distribution of jobs to machines.
 \end{itemize}
 
-\textbf{Child creation logic:}
-\begin{itemize}
-    \item \texttt{'root'}: Can create left (if jobs at depth $>$ 0), right, and lower children.
-    \item \texttt{'right'}: Can create right and lower children.
-    \item \texttt{'left'}: Can create left and lower children (if jobs at depth $>$ 0).
-\end{itemize}
-
-\textbf{Machine load handling:}
-\begin{itemize}
-    \item For \texttt{'right'} branches, machine loads include jobs at current depth.
-    \item For \texttt{'root'} and \texttt{'left'} branches, jobs at depth are distributed to machines only when evaluating makespan or committing.
-\end{itemize}
 
 The makespan contribution from committed jobs is incrementally tracked and updated using the internal machine load state. Each node distributes job occurrences to machines following the LPT rule, ensuring efficient evaluation without recomputation. This approach is computationally efficient and provides good approximate makespan values for partial leader decisions.
 
@@ -61,7 +59,7 @@ The branch-and-bound algorithm uses a depth-first search strategy:
     \item The search starts with a provably good incumbent solution, obtained by solving the MaxLPT problem.
     \item At each node, children are generated corresponding to possible decisions for the next job type.
     \item Left children correspond to decrementing the quantity of the current job type, while right children increment the quantity. Both directions are explored to cover all feasible allocations within the budget.
-    \item The search does not prioritize left or right children; all feasible branches are explored according to the branch-and-bound logic, ensuring optimality and efficient pruning.
+    \item The search prioritizes lower children and makes no distinction between left or right children; all feasible branches are explored according to the branch-and-bound logic, ensuring optimality and efficient pruning.
     \item At the leaf level, only a single leaf node is generated: the one that spends the most remaining budget and thus acquires the maximum number of jobs of type $n$. This is optimal, as any other leaf node with fewer jobs cannot yield a greater makespan.
     \item This approach avoids unnecessary expansion of all possible leaf nodes, improving efficiency, since evaluating leaf nodes by solving the follower's scheduling problem is computationally expensive.
     \item Memory usage is minimized compared to breadth-first approaches.
@@ -83,5 +81,4 @@ Each node tracks remaining budget and incremental makespan contributions:
 \begin{itemize}
     \item Remaining budget is updated in constant time from parent to child.
     \item The makespan contribution from decided items is cached and updated incrementally, avoiding recomputation.
-    \item When generating a child node, machine loads are updated using the LPT rule, reducing complexity from $O(d \cdot J)$ to $O(x_{d+1} \log m)$ per node expansion.
 \end{itemize}

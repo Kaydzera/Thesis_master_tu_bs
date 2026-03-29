@@ -546,12 +546,17 @@ The running time of the algorithm is
 \[
 \mathcal{O}(n \cdot B).
 \]
-This is because we compute the DP table for the unbounded knapsack problem once, which takes $\mathcal{O}(n \cdot B)$ time, and then we iterate through each of the $n$ item types as candidates for the last job. For each candidate, we perform a constant number of operations (looking up the DP table and adjusting the budget no more than $B$ times if necessary), resulting in an overall running time of $\mathcal{O}(n \cdot B)$.
+This is because we compute the DP table for the unbounded knapsack problem once, which takes $\mathcal{O}(n \cdot B)$ time, 
+and then we iterate through each of the $n$ item types as candidates for the last job. 
+For each candidate, we perform a constant number of operations (looking up the DP table and adjusting the budget no more than $B$ times if necessary), resulting in an overall running time of $\mathcal{O}(n \cdot B)$.
 
 \subsection{Connection to the Knapsack-Scheduling Problem}
 
-The max-LPT algorithm provides a good approximation to the leader's problem by maximizing the makespan under the LPT scheduling rule. While the LPT rule is itself an approximation for optimal scheduling, this algorithm finds the \emph{optimal} job selection that maximizes the LPT makespan. 
-We have already shown that this approach yields a $\frac{3}{4}$-approximation for the original knapsack-scheduling problem (Section~\ref{sec:formulation}). If we solve the max-LPT problem before calling the branch and bound Algorithm of the bilevel knapsack program, we obtain a starting incumbent that is guaranteed to be within $\frac{3}{4}$ of the optimal solution. 
+The max-LPT algorithm provides a good approximation to the leader's problem by maximizing the makespan under the LPT scheduling rule. 
+While the LPT rule is itself an approximation for optimal scheduling, this algorithm finds the \emph{optimal} job selection that maximizes the LPT makespan. 
+We have already shown that this approach yields a $\frac{3}{4}$-approximation for the original knapsack-scheduling problem (Section~\ref{sec:formulation}). 
+If we solve the max-LPT problem before calling the branch and bound Algorithm of the bilevel knapsack program, 
+we obtain a starting incumbent that is guaranteed to be within $\frac{3}{4}$ of the optimal solution. 
 In the branch and bound algorithm itself, we can use the max-LPT algorithm to compute upper bounds at each node by evaluating the max-LPT solution for the remaining budget and item types. 
 This provides an upper bound with a $\frac{3}{4}$-approximation guarantee.
 The disadvantage of this approach is that we have to compute the unbounded knapsack DP table for each depth d in the branch and bound tree, since the remaining item types change at each depth:
@@ -561,6 +566,77 @@ The unbounded knapsack DP tables computed before start from item type $1$ up to 
 In total, we have to compute n DP tables, one for each possible depth in the tree. Each DP table requires O((n-d)B) time to compute.
 This is computationally more expensive than our previous upper bound, which only required a single DP table computed once before the branch and bound traversal. 
 We compare both upper bounds experimentally in Chapter~\ref{sec:experiments} to evaluate the trade-off between tighter bounds and computational overhead.
+
+\section*{Example: Computing the Max-LPT Upper Bound at Different Depths}
+
+To illustrate how the Max-LPT upper bound is computed at different depths in the branch-and-bound tree, consider the following example.
+
+Assume $n = 4$ item types, budget $B = 20$, $m = 2$ machines, and the item types are ordered in non-increasing order of duration:
+
+\[
+\begin{array}{c|cccc}
+\text{Item type } i & 1 & 2 & 3 & 4 \\
+\hline
+\text{Duration } d_i & 8 & 6 & 4 & 2 \\
+\text{Cost } p_i & 7 & 5 & 4 & 2 \\
+\end{array}
+\]
+
+Suppose we are at two different depths $d$ in the branch-and-bound tree:
+
+\subsection*{Depth $d = 1$ (only $x_1$ fixed)}
+
+$x_1$ is fixed, while $x_2, x_3, x_4$ are undecided.
+
+Remaining budget:
+\[
+B_{\text{rem}} = B - p_1 x_1
+\]
+
+To compute the Max-LPT upper bound, we solve the Max-LPT problem for the remaining item types $2,3,4$ and budget $B_{\text{rem}}$.
+
+This requires a DP table for the unbounded knapsack problem with items $2,3,4$ (i.e., the longest available duration is $d_2$).
+
+For each possible candidate for the last job (item $2$, $3$, or $4$), we maximize the per-machine budget and use the DP table to find the best combination of jobs for the remaining budget.
+
+This means we need to be able evaluate the DP table for item type $2$ available, item types $2$ and $3$ available, and item types $2, 3$ and $4$ available to compute the upper bound at this node.
+
+\subsection*{Depth $d = 2$ (both $x_1$ and $x_2$ fixed)}
+
+$x_1, x_2$ are fixed, while $x_3, x_4$ are undecided.
+
+Remaining budget:
+\[
+B_{\text{rem}} = B - p_1 x_1 - p_2 x_2
+\]
+
+We solve the Max-LPT problem for the remaining item types $3,4$ and budget $B_{\text{rem}}$.
+
+This requires a DP table for the unbounded knapsack problem with items $3,4$ (i.e., the longest available duration is $d_3$).
+
+For each possible candidate for the last job (item $3$ or $4$), we again maximize the per-machine budget and use the DP table to find the best combination.
+
+This means we need to be able evaluate the DP table for item type $3$ available and item types $3$ and $4$ available to compute the upper bound at this node.
+
+Since the DP table computed for depth $d=1$ only includes items $2,3,4$, it cannot be reused at depth $d=2$ where only items $3,4$ are available.
+
+\subsection*{DP Table Requirements and Item Ordering}
+
+In general, at each depth $d$, we need a DP table for the unbounded knapsack problem with items $d+1, \ldots, n$. Since the items are ordered by non-increasing duration, this means:
+
+\begin{itemize}
+    \item At depth $d = 0$ (root): DP table for items $1,2,3,4$ (all items available).
+    \item At depth $d = 1$: DP table for items $2,3,4$ (longest is $d_2$).
+    \item At depth $d = 2$: DP table for items $3,4$ (longest is $d_3$).
+    \item At depth $d = 3$: DP table for item $4$ only.
+\end{itemize}
+
+Thus, to efficiently compute the Max-LPT upper bound at any node, 
+we must be able to read the DP table for the case when the shortest item type still available is $d_{d+1}$, then $d_{d+2}$, and so on, depending on the candidate for the last item type.
+
+\medskip
+
+This example demonstrates why $n$ different DP tables are needed for the Max-LPT upper bound approach—one for each possible set of remaining item types as we progress through the tree.
 
 \subsection{Modified Branch-and-Bound with Max-LPT Upper Bound}
 

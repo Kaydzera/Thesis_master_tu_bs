@@ -20,7 +20,7 @@ For each test instance, we recorded:
     \item \textbf{Nodes explored:} Number of branch-and-bound nodes evaluated
     \item \textbf{Pruning rate:} Percentage of nodes at which we pruned, i.e., did not further expand the search tree
     \item \textbf{Solution quality:} Optimal makespan $C_{\max}^*$
-    \item \textbf{Status:} Optimal (proved), completed (node/time limit reached), timeout (overall time limit exceeded), or leaf timeout (individual leaf node evaluation exceeded time limit)
+    \item \textbf{Status:} root\_optimal (optimal solution found at the root node), completed, timeout (overall time limit exceeded), or leaf timeout (individual leaf node evaluation exceeded time limit)
 \end{itemize}
 
 \subsection{Test by Pattern}
@@ -86,7 +86,7 @@ To comprehensively evaluate algorithm behavior across diverse problem structures
 
 To verify correctness and demonstrate computational efficiency, we compared our branch-and-bound results against complete enumeration (the most straightforward and exhaustive approach for problems of this type) on all 140 instances in the PatternTestSet. Enumeration guarantees optimality by evaluating every feasible leader decision, but is prohibitively slow. Even for relatively simple instances, it sometimes exceeds the 1-hour time limit. In contrast, our branch-and-bound algorithm consistently solved the same instances in fractions of seconds, always matching the optimal makespans found by enumeration (when available).
 
-\textbf{Verification results:} Out of 140 instances, branch-and-bound and enumeration produced identical optimal makespans for every case. Enumeration completed within the time limit for 125 instances (89\%), but timed out (runtime $\geq$ 3,600 seconds) on 15 instances (11\%). Even for these cases, branch-and-bound still found and verified the optimal solution rapidly. No failures or discrepancies were observed. This confirms both the correctness and the dramatic speed advantage of our method over the baseline enumeration approach.
+\textbf{Verification results:} Out of 140 instances, branch-and-bound and enumeration produced identical optimal makespans for available cases. Enumeration completed within the time limit for 125 instances (89\%), but timed out (runtime $\geq$ 3,600 seconds) on 15 instances (11\%). Even for these cases, branch-and-bound still found and verified the optimal solution rapidly. No failures or discrepancies were observed. This confirms both the correctness and the dramatic speed advantage of our method over the baseline enumeration approach.
 
 
 \begin{table}[htbp]
@@ -111,63 +111,66 @@ Subset Sum & 0/20 & 27.67 & 0.0009 & 0.0013 & 0.0020 & 0.0022 \\
 \small\textit{\textbf{Note:} TO = number of enumeration timeouts out of 20 instances per pattern.}
 \end{minipage}\\[0.5em]
 
+Since we could not observe significant time differences between the different creation patterns due to the overall speed of our algorithm, we decided to focus on a sensitivity analysis in the next phase to explore the limits of our approach, where we systematically increase individual parameters to observe how performance scales.
+
 
 \section{Sensitivity Analysis: Single Parameter Scaling}
 
-
 Having verified correctness, we investigated how algorithm performance scales as individual problem parameters increase. For each parameter (number of job types, number of machines, budget multiplier), we conducted a systematic sensitivity analysis using a 1-hour time limit per instance. For each parameter value, 5 random instances were generated and solved using both the ceiling and MaxLPT bounds. The parameters were increased until we hit the time limit.
+
 
 \textbf{Instance generation:} For each parameter setting, test instances were generated using the following procedure:
 \begin{itemize}
-    \item Job durations: Uniformly random integers in [5, 20]
-    \item Job prices: Uniformly random integers in [2, 15]
-    \item Budget: $B = \text{multiplier} \times \sum_i p_i$
+    \item Job prices: Uniformly random integers in [10, 100]
+    \item Job durations: Uniformly random integers in [5, 50]
+    \item Budget: $B = \text{budget multiplier} \times$ (average job cost) $\times$ (number of machines)
+    \item Baseline: 20 jobs, 10 machines, budget multiplier 2.5, node limit 1 billion, time limit 1 hour per instance, leaf timeout 15 minutes
     \item Number of machines, jobs, and budget multiplier varied as specified
     \item Each instance uses a unique random seed for reproducibility
 \end{itemize}
 
-For each instance, the branch-and-bound algorithm was run twice: once with the ceiling bound and once with the MaxLPT bound. Metrics recorded include runtime, nodes explored, and pruning rate. Results are averaged over all random seeds for each parameter value.
+For each instance, the branch-and-bound algorithm was run twice: once with the ceiling bound and once with the MaxLPT bound. To capture the full performance profile, we generated instances until at least one instance used the branch and bound tree instead of being solved at the root node for each parameter setting, allowing us to identify the practical limits of our approach and compare the performance of the two bounds under increasing complexity. Performance metrics were recorded for all runs to analyze trends and differences between the bounds as parameters scaled up.
 
 \subsection{Methodology}
 
 \begin{itemize}
     \item Fix two parameters at baseline values
     \item Systematically increase the third parameter
-    \item For each parameter value, generate 5 instances with different random seeds
-    \item Continue increasing until at least one instance times out (exceeds 3,600 seconds)
+    \item For each parameter value, generate instances with different random seeds until at least one instance requires branch-and-bound search (not solved at root)
+    \item Continue increasing the observed parameter until at least one instance times out (exceeds 3,600 seconds)
     \item Record runtime, nodes explored, pruning rate, and solution quality
 \end{itemize}
 
 \paragraph{Column meanings and discussion.}
-The sensitivity tables report performance metrics as a single parameter (number of job types, machines, or budget multiplier) increases. Columns include average runtime in seconds for the ceiling- and MaxLPT bound, the average number of branch-and-bound nodes explored, the average pruning rate (percentage of nodes at which we pruned), and the number of instances (out of 5) where the entire search tree was skipped and the problem was solved at the root node due to the early optimality detection mechanism described in Section~\ref{sec:early-optimality-detection} (since this mechanism works identically for both bounds, the value is shown only once per row).
+The sensitivity tables report performance metrics as a single parameter (number of job types, machines, or budget multiplier) increases. 
+Columns include average runtime in seconds for the ceiling- and MaxLPT bound, the average number of branch-and-bound nodes explored, the average pruning rate (percentage of nodes at which we pruned), 
+and the number of instances that were generated until the problem was not solved at the root node due to the early optimality detection mechanism described in Section~\ref{sec:early-optimality-detection} (since this mechanism works identically for both bounds, the value is shown only once per row).
 
 \subsection{Scaling Number of Job Types}
 
-\textbf{Fixed parameters:} 4 machines, budget multiplier 2.0
+\textbf{Fixed parameters:} 10 machines, budget multiplier 2.5
+
 
 Table~\ref{tab:sensitivity-jobs} summarizes the results for increasing the number of job types.
-
 
 \begin{table}[htbp]
 \centering
 \caption{Performance scaling with number of job types (1h time limit)}
 \label{tab:sensitivity-jobs}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{r|rrrrrrrrr}
-Job Types & Ceil Time & Ceil Nodes & Ceil Prune & \#0 Nodes & MaxLPT Time & MaxLPT Nodes & MaxLPT Prune \\
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Jobs & Ceil Time & Ceil Nodes & Ceil Pruned & Ceil Prune Rate & MaxLPT Time & MaxLPT Nodes & MaxLPT Pruned & MaxLPT Prune Rate & Match Makespan & Speedup \\
 \midrule
-4 & 0.05 & 50 & 8.8\% & 4 & 0.02 & 17 & 4.1\% \\
-6 & 0.04 & 639 & 18.7\% & 4 & 0.02 & 248 & 18.9\% \\
-8 & 0.22 & 3009 & 17.9\% & 4 & 0.08 & 579 & 18.3\% \\
-10 & 0.01 & 0 & 0.0\% & 5 & 0.02 & 0 & 0.0\% \\
-12 & 16.55 & 208968 & 52.5\% & 2 & 96.42 & 101737 & 44.6\% \\
-14 & 0.72 & 6740 & 35.9\% & 3 & 0.22 & 1053 & 34.0\% \\
-16 & 36.04 & 100008 & 18.4\% & 4 & 18.82 & 1670 & 13.3\% \\
-18 & 56.00 & 200002 & 34.5\% & 3 & 11.30 & 14132 & 28.0\% \\
-20 & 0.33 & 3852 & 18.4\% & 4 & 0.33 & 617 & 18.5\% \\
-22 & 207.31 & 300059 & 52.8\% & 2 & 196.14 & 111782 & 44.4\% \\
-24 & 1.79 & 32302 & 17.3\% & 4 & 0.50 & 589 & 16.5\% \\
-26 & 1578.89 & 300027 & 48.0\% & 2 & 3217.87 & 119938 & 40.9\% \\
+12 & 3928.0 & 38283828 & 0 & 0.0\% & 89.5 & 1365976 & 0 & 0.0\% & True & 43.91 \\
+14 & 244.9 & 3473779 & 0 & 0.0\% & 62.4 & 860687 & 0 & 0.0\% & True & 3.93 \\
+16 & 4291.0 & 44592513 & 0 & 0.0\% & 1833.0 & 23428781 & 0 & 0.0\% & True & 2.34 \\
+18 & 3967.2 & 56670416 & 0 & 0.0\% & 340.2 & 6837448 & 0 & 0.0\% & True & 11.66 \\
+20 & 3981.7 & 55896770 & 0 & 0.0\% & 131.1 & 400892 & 0 & 0.0\% & True & 30.37 \\
+22 & 3989.2 & 55394233 & 0 & 0.0\% & 93.9 & 268123 & 0 & 0.0\% & True & 42.50 \\
+24 & 4080.5 & 58167454 & 0 & 0.0\% & 139.6 & 3102853 & 0 & 0.0\% & True & 29.23 \\
+26 & 4030.8 & 54780931 & 0 & 0.0\% & 127.8 & 436990 & 0 & 0.0\% & True & 31.53 \\
+28 & 4018.7 & 52662106 & 0 & 0.0\% & 3949.0 & 49055446 & 0 & 0.0\% & True & 1.02 \\
 \bottomrule
 \end{tabular}%
 }
@@ -179,7 +182,8 @@ Job Types & Ceil Time & Ceil Nodes & Ceil Prune & \#0 Nodes & MaxLPT Time & MaxL
 
 \subsection{Scaling Number of Machines}
 
-\textbf{Fixed parameters:} 8 job types, budget multiplier 2.0
+\textbf{Fixed parameters:} 20 job types, budget multiplier 2.5
+
 
 Table~\ref{tab:sensitivity-machines} summarizes the results for increasing the number of machines.
 
@@ -188,20 +192,12 @@ Table~\ref{tab:sensitivity-machines} summarizes the results for increasing the n
 \caption{Performance scaling with number of machines (1h time limit)}
 \label{tab:sensitivity-machines}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{r|rrrrrrrr}
-Machines & Ceil Time & Ceil Nodes & Ceil Prune & \#0 Nodes & MaxLPT Time & MaxLPT Nodes & MaxLPT Prune \\
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Machines & Ceil Time & Ceil Nodes & Ceil Pruned & Ceil Prune Rate & MaxLPT Time & MaxLPT Nodes & MaxLPT Pruned & MaxLPT Prune Rate & Match Makespan & Speedup \\
 \midrule
-2 & 0.03 & 0 & 0.0\% & 5 & 0.01 & 0 & 0.0\% \\
-3 & 0.01 & 0 & 0.0\% & 5 & 0.02 & 0 & 0.0\% \\
-4 & 2.13 & 1642 & 12.7\% & 4 & 1.42 & 436 & 4.3\% \\
-5 & 3.80 & 3215 & 17.5\% & 4 & 3.33 & 1360 & 15.8\% \\
-6 & 0.01 & 0 & 0.0\% & 5 & 0.02 & 0 & 0.0\% \\
-7 & 105.70 & 12003 & 19.7\% & 3 & 91.08 & 6547 & 8.5\% \\
-8 & 0.01 & 0 & 0.0\% & 5 & 0.02 & 0 & 0.0\% \\
-9 & 157.80 & 20770 & 8.0\% & 4 & 123.04 & 10143 & 3.7\% \\
-10 & 0.01 & 0 & 0.0\% & 5 & 0.02 & 0 & 0.0\% \\
-11 & 0.01 & 0 & 0.0\% & 5 & 0.02 & 0 & 0.0\% \\
-12 & 720.08 & 17757 & 0.7\% & 4 & 720.09 & 16470 & 0.4\% \\
+11 & 4145.1 & 47616691 & 0 & 0.0\% & 370.2 & 3977835 & 0 & 0.0\% & True & 11.20 \\
+12 & 3607.7 & 1305044 & 0 & 0.0\% & 3609.8 & 1495094 & 0 & 0.0\% & True & 1.00 \\
 \bottomrule
 \end{tabular}%
 }
@@ -211,7 +207,8 @@ Machines & Ceil Time & Ceil Nodes & Ceil Prune & \#0 Nodes & MaxLPT Time & MaxLP
 
 \subsection{Scaling Budget Multiplier}
 
-\textbf{Fixed parameters:} 8 job types, 4 machines
+\textbf{Fixed parameters:} 20 job types, 10 machines
+
 
 Table~\ref{tab:sensitivity-budget} summarizes the results for increasing the budget multiplier.
 
@@ -222,60 +219,14 @@ Budget is calculated as: $B = \text{multiplier} \times \sum_i p_i$
 \caption{Performance scaling with budget multiplier (1h time limit)}
 \label{tab:sensitivity-budget}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{r|rrrrrrrr}
-Multiplier & Ceil Time & Ceil Nodes & Ceil Prune & \#0 Nodes & MaxLPT Time & MaxLPT Nodes & MaxLPT Prune \\
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+Budget Multiplier & Ceil Time & Ceil Nodes & Ceil Pruned & Ceil Prune Rate & MaxLPT Time & MaxLPT Nodes & MaxLPT Pruned & MaxLPT Prune Rate & Match Makespan & Speedup \\
 \midrule
-1.20 & 0.10 & 733 & 15.3\% & 4 & 0.04 & 87 & 9.7\% \\
-1.40 & 0.03 & 78 & 16.4\% & 4 & 0.02 & 22 & 14.2\% \\
-1.60 & 1.18 & 2850 & 27.1\% & 3 & 0.47 & 508 & 17.9\% \\
-1.80 & 1.80 & 15120 & 53.2\% & 2 & 0.31 & 1761 & 52.6\% \\
-2.00 & 1.06 & 8874 & 35.0\% & 3 & 0.34 & 771 & 33.2\% \\
-2.20 & 1.20 & 445 & 11.5\% & 4 & 1.23 & 286 & 7.3\% \\
-2.40 & 5.84 & 42662 & 49.5\% & 2 & 3.36 & 15954 & 48.0\% \\
-2.60 & 0.05 & 970 & 19.0\% & 4 & 0.02 & 79 & 18.5\% \\
-2.80 & 8.69 & 85460 & 34.3\% & 3 & 1.12 & 4574 & 32.3\% \\
-3.00 & 0.06 & 130 & 16.9\% & 4 & 0.04 & 56 & 16.9\% \\
-3.20 & 13.40 & 12450 & 15.0\% & 4 & 10.30 & 4755 & 10.3\% \\
-3.40 & 30.90 & 11279 & 14.3\% & 4 & 11.28 & 1738 & 5.9\% \\
-3.60 & 4.30 & 9446 & 47.2\% & 2 & 1.45 & 823 & 34.9\% \\
-3.80 & 0.10 & 265 & 18.6\% & 4 & 0.10 & 89 & 16.9\% \\
-4.00 & 0.02 & 0 & 0.0\% & 5 & 0.03 & 0 & 0.0\% \\
-4.20 & 28.12 & 24270 & 16.8\% & 4 & 10.78 & 2907 & 14.8\% \\
-4.40 & 0.02 & 0 & 0.0\% & 5 & 0.04 & 0 & 0.0\% \\
-4.60 & 24.67 & 18458 & 34.2\% & 3 & 16.68 & 1314 & 17.6\% \\
-4.80 & 34.49 & 130847 & 37.4\% & 3 & 22.60 & 31674 & 35.8\% \\
-5.00 & 3.55 & 25607 & 54.8\% & 2 & 2.16 & 3098 & 50.0\% \\
-5.20 & 0.23 & 2703 & 49.7\% & 2 & 0.11 & 417 & 50.5\% \\
-5.40 & 0.06 & 545 & 35.8\% & 3 & 0.08 & 257 & 35.6\% \\
-5.60 & 0.84 & 475 & 29.1\% & 3 & 0.68 & 194 & 26.9\% \\
-5.80 & 10.56 & 8645 & 19.1\% & 4 & 7.25 & 3255 & 18.7\% \\
-6.00 & 0.03 & 0 & 0.0\% & 5 & 0.06 & 0 & 0.0\% \\
-6.20 & 1.18 & 2176 & 33.8\% & 3 & 0.38 & 308 & 28.9\% \\
-6.40 & 41.44 & 15822 & 35.1\% & 3 & 17.48 & 2100 & 29.3\% \\
-6.60 & 29.47 & 44457 & 86.1\% & 0 & 16.24 & 4851 & 77.4\% \\
-6.80 & 8.25 & 39269 & 54.9\% & 2 & 5.17 & 1347 & 48.6\% \\
-7.00 & 307.50 & 101247 & 61.6\% & 1 & 230.71 & 19632 & 47.3\% \\
-7.20 & 289.03 & 72060 & 51.7\% & 2 & 73.49 & 9816 & 46.5\% \\
-7.40 & 2.04 & 7789 & 17.3\% & 4 & 0.61 & 300 & 13.2\% \\
-7.60 & 51.23 & 100000 & 17.5\% & 4 & 9.13 & 7568 & 17.5\% \\
-7.80 & 0.04 & 0 & 0.0\% & 5 & 0.10 & 0 & 0.0\% \\
-8.00 & 3.06 & 28129 & 19.6\% & 4 & 0.98 & 3803 & 19.7\% \\
-8.20 & 1.35 & 3521 & 37.8\% & 3 & 0.77 & 670 & 36.9\% \\
-8.40 & 149.14 & 101866 & 33.0\% & 3 & 41.83 & 7242 & 31.6\% \\
-8.60 & 0.96 & 3065 & 34.2\% & 3 & 0.92 & 659 & 33.4\% \\
-8.80 & 0.40 & 2757 & 19.7\% & 4 & 0.43 & 1920 & 19.6\% \\
-9.00 & 0.05 & 67 & 17.2\% & 4 & 0.12 & 44 & 17.7\% \\
-9.20 & 4.28 & 17887 & 57.8\% & 2 & 1.97 & 3754 & 57.7\% \\
-9.40 & 147.38 & 105165 & 56.3\% & 1 & 122.28 & 21231 & 44.9\% \\
-9.60 & 1.71 & 12553 & 36.1\% & 3 & 0.71 & 2601 & 32.6\% \\
-9.80 & 9.93 & 12776 & 33.8\% & 3 & 2.14 & 587 & 22.9\% \\
-10.00 & 23.24 & 30723 & 17.9\% & 4 & 12.38 & 2634 & 14.1\% \\
-10.20 & 31.98 & 1857 & 16.9\% & 4 & 26.82 & 356 & 12.9\% \\
-10.40 & 475.99 & 102715 & 30.7\% & 3 & 447.68 & 54332 & 24.6\% \\
-10.60 & 529.19 & 102603 & 51.7\% & 2 & 185.37 & 8505 & 47.2\% \\
-10.80 & 123.56 & 107122 & 47.1\% & 2 & 24.56 & 2102 & 35.1\% \\
-11.00 & 8.85 & 100265 & 34.0\% & 3 & 5.04 & 5085 & 30.4\% \\
-11.20 & 5087.06 & 250000 & 36.4\% & 1 & 0.24 & 0 & 0.0\% \\
+4.0 & 4028.9 & 20932694 & 0 & 0.0\% & 568.2 & 696938 & 0 & 0.0\% & True & 7.09 \\
+5.0 & 3879.0 & 34248348 & 0 & 0.0\% & 2702.1 & 25266723 & 0 & 0.0\% & True & 1.44 \\
+6.0 & 3727.2 & 9958262 & 0 & 0.0\% & 2177.3 & 10081710 & 0 & 0.0\% & True & 1.71 \\
+7.0 & 4057.5 & 44522090 & 0 & 0.0\% & 4043.4 & 54110812 & 0 & 0.0\% & True & 1.00 \\
 \bottomrule
 \end{tabular}%
 }
@@ -295,7 +246,7 @@ We constructed a two-dimensional experimental grid:
 \begin{itemize}
     \item \textbf{Job types axis:} 4, 8, 12, 16, 20, 24 (6 values)
     \item \textbf{Machine axis:} 2, 4, 6, 8, 10, 12 (6 values)
-    \item \textbf{Budget multipliers:} Fixed at 2.3, 2.5 and 5.0 (separate experiments)
+    \item \textbf{Budget multipliers:} Fixed at 1.3, 2.5 and 5.0 (separate experiments)
     \item \textbf{Repetitions:} 5 random seeds per configuration
     \item \textbf{Total:} $6 \times 6 \times 3 \times 5 = 540$ instances
     \item \textbf{Time limit:} 1 hour per instance
