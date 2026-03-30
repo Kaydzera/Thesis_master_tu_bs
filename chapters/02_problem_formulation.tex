@@ -64,19 +64,19 @@ where $L_k$ denotes the load on machine $k$, defined as the total processing tim
 
 \section{Complete Bilevel Formulation}
 
-We present a mixed-integer linear programming (MILP) formulation compatible with standard bilevel solvers such as MibS~\cite{fischetti2016intersection}. The formulation uses a shared makespan variable $C_{\max}$ that appears in both levels:
+We present a mixed-integer linear programming (MILP) formulation compatible with standard bilevel solvers such as MibS~\cite{Tahernejad2020}. The formulation uses a shared makespan variable $C_{\max}$ that appears in both levels:
 
 \begin{align}
-\max_{x, C_{\max}} \quad & C_{\max} \label{eq:leader-obj}\\
+\max_{x} \quad & C_{\max} \label{eq:leader-obj}\\
 \text{s.t.} \quad & \sum_{i=1}^{n} p_i x_i \leq B \label{eq:budget}\\
 & x_i \in \mathbb{Z}_+ \quad \forall i \in \{1, \ldots, n\} \nonumber\\[1ex]
-\text{where } C_{\max} \in \quad & \arg\min_{y, C_{\max}} \quad C_{\max} \label{eq:follower-obj}\\
+\text{where } C_{\max} = \quad & \min_{y, \hat{C_{\max}}} \quad \hat{C_{\max}} \label{eq:follower-obj}\\
 \text{s.t.} \quad & \sum_{k=1}^{m} y_{ik} = x_i \quad \forall i \in \{1, \ldots, n\} \label{eq:assign}\\
-& C_{\max} \geq \sum_{i=1}^{n} d_i \cdot y_{ik} \quad \forall k \in \{1, \ldots, m\} \label{eq:makespan}\\
+& \hat{C_{\max}} \geq \sum_{i=1}^{n} d_i \cdot y_{ik} \quad \forall k \in \{1, \ldots, m\} \label{eq:makespan}\\
 & y_{ik} \in \mathbb{Z}_+ \quad \forall i, k \nonumber
 \end{align}
 
-The leader's variables are $x_i$ (number of jobs of type $i$ to select) and the follower's variables are $y_{ik}$ (number of jobs of type $i$ assigned to machine $k$). The shared variable $C_{\max}$ represents the makespan: the leader seeks to maximize it while the follower seeks to minimize it, creating the adversarial nature of the problem.
+The leader's variables are $x_i$ (number of jobs of type $i$ to select) and the follower's variables are $y_{ik}$ (number of jobs of type $i$ assigned to machine $k$). The variables $C_{\max}$ and $\hat{C_{\max}}$ represent the makespan: the leader seeks to maximize it while the follower seeks to minimize it, creating the adversarial nature of the problem.
 
 \section{Problem Characteristics}
 
