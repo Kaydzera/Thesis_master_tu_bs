@@ -725,7 +725,10 @@ To quantify the performance gap, we matched all 180 test instances between MIBS 
         \end{itemize}
 \end{itemize}
 
-These results show that both bounds are dramatically faster than MIBS, with MaxLPT slightly outperforming Ceiling in speed and robustness. The median speedup is nearly the full timeout limit, indicating that MIBS often fails where our approach succeeds in seconds. This confirms the practical advantage and scalability of the branch-and-bound algorithm for bilevel knapsack-scheduling.
+These results show that both bounds are dramatically faster than MIBS, with MaxLPT slightly outperforming Ceiling in speed and robustness. 
+The median speedup is nearly the full timeout limit, indicating that MIBS often fails where our approach succeeds in seconds. 
+This confirms the practical advantage and scalability of our specialized branch-and-bound algorithm for bilevel knapsack-scheduling.
+While MIBS is a powerful general-purpose solver, it is not optimized for the specific structure of our problem, leading to significant performance degradation as instance size increases.
 
 
 

@@ -16,29 +16,33 @@ The main contributions are:
 
 \section{Key Results and Insights}
 
+The taylored branch-and-bound algorithm for knapsack-scheduling problems achieves substantial speedups over general-purpose solvers, successfully solving instances with up to 26 job types and 12 machines, 
+and demonstrating scalability beyond these sizes in certain cases. In the following, we summarize the key points from the algorithm's design and performance:
 \begin{itemize}
-    \item The branch-and-bound algorithm achieves substantial speedups over complete enumeration, successfully solving instances with up to 26 job types and 12 machines, and demonstrating scalability beyond these sizes in certain cases.
-    \item Tight bounds from knapsack scheduling relaxation and LPT rule enable effective pruning, reducing the search space and improving efficiency.
+    \item The LPT rule provides a $\frac{4}{3}$-approximation for makespan bounds, guaranteeing good starting incumbents.
+    \item Tight bounds from the ceiling bound and LPT bound enable effective pruning, reducing the search space and improving efficiency.
     \item The modular implementation supports efficient node expansion, incremental updates, and memory savings compared to breadth-first approaches.
     \item Gurobis~\cite{gurobi} integration ensures that the follower's scheduling problem is solved optimally using state-of-the-art integer programming techniques, contributing to the overall performance of the algorithm.
     \item Computational experiments confirm the algorithm's robustness across diverse instance types, including uniform, high variance, and correlated job structures.
 \end{itemize}
 
 \section{Limitations}
-
+While the proposed algorithm demonstrates significant improvements over current state-of-the-art methods, several limitations remain:
 \begin{itemize}
-    \item The LPT rule provides a $\frac{4}{3}$-approximation for makespan bounds, which may slightly overestimate contributions from decided items.
     \item There is currently no theory guaranteeing for which instances the optimal solution can be found at the root node. 
     \item Scalability is limited for very large instances (e.g., 30+ job types or extreme budget/machine counts) due to exponential complexity if the solution cannot be obtained at the root node.
     \item The current model focuses solely on makespan; real-world applications may require multi-objective optimization (cost, energy, risk distribution).
+    \item The algorithm is designed for parallel machine scheduling; extensions to unrelated machines or other scheduling environments may require significant modifications.
 \end{itemize}
 
 \section{Future Directions}
 
+The advances achieved in modeling and solving bilevel knapsack-scheduling problems in this thesis highlight several opportunities for continued research and development:
 \begin{itemize}
     \item Algorithmic improvements: Enhanced pruning, symmetry breaking and parallelization.
     \item Theoretical analysis: Characterization of instance properties that allow optimal solutions at the root node.
-    \item Problem extensions: Unrelated machines, precedence constraints, stochastic processing times, and multi-objective formulations.
+    \item Problem extensions: further constraints, stochastic processing times, and multi-objective formulations.
+    \item Unrelated machines could be an interesting extension, as ceiling bound may be easily applicable to this setting. While the LPT bound outperforms the ceiling bound in the parallel machine setting, the relatively straightforward approach of the ceiling bound makes it a promising candidate for the unrelated machine setting.
     \item Application areas: Production scheduling, capacity planning, project management, and resource allocation under uncertainty.
 \end{itemize}
 
