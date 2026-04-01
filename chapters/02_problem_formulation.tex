@@ -72,13 +72,13 @@ We present a mixed-integer linear programming (MILP) formulation compatible with
 \max_{x} \quad & C_{\max} \label{eq:leader-obj}\\
 \text{s.t.} \quad & \sum_{i=1}^{n} p_i x_i \leq B \label{eq:budget}\\
 & x_i \in \mathbb{Z}_+ \quad \forall i \in \{1, \ldots, n\} \nonumber\\[1ex]
-\text{where } C_{\max} = \quad & \min_{y, \hat{C_{\max}}} \quad \hat{C_{\max}} \label{eq:follower-obj}\\
+\text{where } C_{\max} = \quad & \min_{y, \hat{C}_{\max}} \quad \hat{C}_{\max} \label{eq:follower-obj}\\
 \text{s.t.} \quad & \sum_{k=1}^{m} y_{ik} = x_i \quad \forall i \in \{1, \ldots, n\} \label{eq:assign}\\
-& \hat{C_{\max}} \geq \sum_{i=1}^{n} d_i \cdot y_{ik} \quad \forall k \in \{1, \ldots, m\} \label{eq:makespan}\\
+& \hat{C}_{\max} \geq \sum_{i=1}^{n} d_i y_{ik} \quad \forall k \in \{1, \ldots, m\} \label{eq:makespan}\\
 & y_{ik} \in \mathbb{Z}_+ \quad \forall i, k \nonumber
 \end{align}
 
-The leader's variables are $x_i$ (number of jobs of type $i$ to select) and the follower's variables are $y_{ik}$ (number of jobs of type $i$ assigned to machine $k$). The variables $C_{\max}$ and $\hat{C_{\max}}$ represent the makespan: the leader seeks to maximize it while the follower seeks to minimize it, creating the adversarial nature of the problem.
+The leader's variables are $x_i$ (number of jobs of type $i$ to select) and the follower's variables are $y_{ik}$ (number of jobs of type $i$ assigned to machine $k$). The variables $C_{\max}$ and $\hat{C}_{\max}$ represent the makespan: the leader seeks to maximize it while the follower seeks to minimize it, creating the adversarial nature of the problem.
 
 \section{Problem Characteristics}
 
@@ -97,11 +97,17 @@ We provide a brief overview of selected works relevant to our problem; for a com
 Dempe and Zemkoho~\cite{dempe2020bilevel} provide a comprehensive mathematical foundation for bilevel optimization, covering theory, optimality conditions, and solution approaches. Kleinert et al.~\cite{kleinert2021survey} offer an extensive survey on mixed-integer programming techniques in bilevel optimization, reviewing branch-and-bound methods, cutting planes, and decomposition approaches that form the algorithmic foundation for modern bilevel solvers.
 
 
-On the algorithmic side, Fischetti et al.~\cite{fischetti2016intersection} introduced intersection cuts for bilevel optimizationand and compared their results against the MibS (Mixed Integer Bilevel Solver) framework that was developed by Tahernejad, Ralphs, and DeNegre~\cite{Tahernejad2020}. 
-MibS implements a comprehensive branch-and-cut algorithm for mixed-integer bilevel linear optimization, combining features from traditional MILP and bilevel methods with new techniques to create a flexible and robust solver. 
-In this thesis, we compare our specialized branch-and-bound algorithm against MibS just like Fischetti et al.~\cite{fischetti2016intersection}, to evaluate the benefits of problem-specific techniques versus general-purpose bilevel solvers.
+On the algorithmic side, Tahernejad, Ralphs, and DeNegre~\cite{Tahernejad2020} developed MibS, 
+a general-purpose solver for mixed-integer bilevel linear optimization problems. 
+MibS implements a comprehensive branch-and-cut algorithm that combines features from traditional MILP and bilevel methods with new techniques to create a flexible and robust solver.
+Fischetti et al.~\cite{fischetti2016intersection} used MibS as a benchmark to compare their proposed intersection cuts for Mixed-Integer Bilevel Linear Programs, 
+demonstrating that problem-specific cutting planes can significantly improve performance over general-purpose solvers. 
+In this thesis, we follow their approach by comparing our specialized branch-and-bound algorithm against MibS that is open source and available for public use to evaluate the benefits of problem-specific techniques versus general-purpose bilevel solvers.
 
-Most relevant to our work, Weninger and Fukasawa~\cite{weninger2025bilevel} recently developed a fast combinatorial branch-and-bound algorithm for the bilevel knapsack problem with interdiction constraints. Their approach uses dynamic programming to compute strong lower bounds by solving a relaxed 2n-level version of the problem where items are processed in an online fashion. This technique shares similarities with our method, as both employ branch-and-bound combined with dynamic programming to exploit problem structure. However, their lower-level problem is a second knapsack optimization problem, whereas ours involves parallel machine scheduling, requiring different bounding techniques.
+Most relevant to our work, Weninger and Fukasawa~\cite{weninger2025bilevel} recently developed a fast combinatorial branch-and-bound algorithm for the bilevel knapsack problem with interdiction constraints. 
+Their approach uses dynamic programming to compute strong lower bounds by solving a relaxed 2n-level version of the problem where items are processed in an online fashion. 
+This technique shares similarities with our method, as both employ branch-and-bound combined with dynamic programming to exploit problem structure. 
+However, their lower-level problem is a second knapsack optimization problem, whereas ours involves parallel machine scheduling, requiring different bounding techniques.
 
 Leitner et al.~\cite{leitner2023exact} further advanced the field by developing exact methods for three-level optimization problems (fortification games), demonstrating that problem-specific reformulations and specialized cuts can significantly outperform general approaches, solving instances with over 330,000 nodes to optimality.
 

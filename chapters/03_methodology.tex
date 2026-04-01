@@ -31,7 +31,7 @@ The search space grows exponentially with the problem parameters.
 Here, the total number of feasible selections is determined by the number of ways to choose non-negative integer quantities $x_i$ for each item type $i$ such that the total cost does not exceed the budget $B$.
 Thus, the maximum number of copies that can be purchased for item $i$ is given by
 \[
-\left\lfloor \frac{B}{p_i} \right\rfloor.
+x_i \leq \left\lfloor \frac{B}{p_i} \right\rfloor.
 \]
 Because we have to account for the already spent budget from the first $d$ items, its not quite trivial to compute the exact number of feasible combinations. However, an upper bound can be expressed as
 \[
@@ -133,7 +133,11 @@ Since item types are presorted from longest to shortest duration, the algorithm 
 
 \textbf{Optimality:} The LPT rule is a $\frac{4}{3}$-approximation for makespan minimization~\cite{graham1969bounds}, and often produces optimal or near-optimal solutions in practice, as we will see in our computational experiments later.
 
-\textbf{Incremental Updates:} Importantly, we do not recompute $C_{\max}^{\text{LPT},(d)}$ from scratch at each node. Instead, when generating a child node by deciding on item type $d+1$ with quantity $x_{d+1}$, we incrementally update the machine loads by adding the $x_{d+1}$ jobs of duration $d_{d+1}$ to the current schedule. Similarly, the remaining budget $B_{\text{rem}}$ is updated incrementally by subtracting $p_{d+1} \cdot x_{d+1}$ from the parent node's remaining budget. This incremental approach significantly reduces computational overhead during tree traversal.
+\textbf{Incremental Updates:} Importantly, we do not recompute $C_{\max}^{\text{LPT},(d)}$ from scratch at each node. 
+Instead, when generating a child node by deciding on item type $d+1$ with quantity $x_{d+1}$, 
+we incrementally update the machine loads by adding the $x_{d+1}$ jobs of duration $d_{d+1}$ to the current schedule. 
+Similarly, the remaining budget $B_{\text{rem}}$ is updated incrementally by subtracting $p_{d+1} x_{d+1}$ from the parent node's remaining budget. 
+This incremental approach significantly reduces computational overhead during tree traversal.
 
 
 
@@ -145,7 +149,7 @@ At a given subtree rooted at depth $d$, we have already fixed the quantities of 
 
 Formally, since any complete solution satisfies
 \begin{equation}
-\max_{\substack{x_{d+1}, \ldots, x_n \\ \sum_{i=d+1}^{n} p_i x_i \leq B_{\text{rem}}}} C_{\max}^*(x_1, \ldots, x_d, x_{d+1}, \ldots, x_n) \leq \text{UB}(x_1, \ldots, x_d, B_{\text{rem}}),
+\max_{\substack{x_{d+1}, \ldots, x_n: \\ \sum_{i=d+1}^{n} p_i x_i \leq B_{\text{rem}}}} C_{\max}^*(x_1, \ldots, x_d, x_{d+1}, \ldots, x_n) \leq \text{UB}(x_1, \ldots, x_d, B_{\text{rem}}),
 \end{equation}
 we can safely prune the subtree whenever
 \begin{equation}
@@ -223,10 +227,11 @@ The knapsack scheduling relaxation decomposes the upper bound into the makespan 
 
 \textbf{Formulation:}
 \begin{align}
-\text{UB}(x_1, \ldots, x_d, B_{\text{rem}}) = & C_{\max}^{\text{LPT},(d)} + \max_{\substack{y_{d+1}, \ldots, y_n}} \sum_{i=d+1}^{n} d_i \left\lceil \frac{y_i}{m} \right\rceil \label{eq:ub}\\
-\text{s.t.} \quad & \sum_{i=d+1}^{n} p_i y_i \leq B_{\text{rem}} \nonumber\\
-& y_i \in \mathbb{Z}_+ \quad \forall i > d \nonumber
+\text{UB}(x_1, \ldots, x_d, B_{\text{rem}}) = C_{\max}^{\text{LPT},(d)} + & \max_{\substack{y_{d+1}, \ldots, y_n}} \sum_{i=d+1}^{n} d_i \left\lceil \frac{y_i}{m} \right\rceil \label{eq:ub}\\
+& \text{s.t.} \quad \sum_{i=d+1}^{n} p_i y_i \leq B_{\text{rem}} \nonumber\\
+& \quad \quad y_i \in \mathbb{Z}_+ \quad \forall i > d \nonumber
 \end{align}
+
 where $C_{\max}^{\text{LPT},(d)}$ denotes the makespan obtained by scheduling jobs of types $1, \ldots, d$ with quantities $x_1, \ldots, x_d$ using the LPT rule, and $y_i$ represents the (to-be-determined) quantity of job type $i$ for items not yet fixed.
 
 The objective function uses the ceiling term $\lceil y_i / m \rceil$ to provide an optimistic estimate over the effect of the item types that still need to be selected.
@@ -246,9 +251,13 @@ We establish the upper bound by analyzing the Longest-Processing-Time (LPT) sche
 
 The Bound is derived as an execution of the LPT rule for the job types $1, \ldots, d$ with quantities $x_1, \ldots, x_d$ and an upper bound on the contribution of the remaining job types $d+1, \ldots, n$ with quantities $y_{d+1}, \ldots, y_n$ chosen to maximize the LPT makespan under the budget constraint.
 
-Consider LPT scheduling on $m$ parallel machines. By construction of the branch-and-bound tree, assume job types are ordered by non-increasing processing time: $d_1 \geq d_2 \geq \cdots \geq d_n$. The LPT rule assigns each job to the currently least-loaded machine.
+Consider LPT scheduling on $m$ parallel machines. 
+By construction of the branch-and-bound tree, assume job types are ordered by non-increasing processing time: \\
+ $d_1 \geq d_2 \geq \cdots \geq d_n$. The LPT rule assigns each job to the currently least-loaded machine.
 
-At depth $d$ in the search tree, quantities $x_1, \ldots, x_d$ are fixed, and all copies of these job types have been scheduled using LPT. Let $C_{\max}^{\text{LPT},(d)}$ denote the makespan after scheduling these jobs. To obtain an upper bound, we assume all machines are filled to exactly $C_{\max}^{\text{LPT},(d)}$—this represents a worst-case scenario that can only increase (never decrease) the final makespan.
+At depth $d$ in the search tree, quantities $x_1, \ldots, x_d$ are fixed, and all copies of these job types have been scheduled using LPT. 
+Let $C_{\max}^{\text{LPT},(d)}$ denote the makespan after scheduling these jobs. 
+To obtain an upper bound, we assume all machines are filled to exactly $C_{\max}^{\text{LPT},(d)}$ - this represents a worst-case scenario that can only increase (never decrease) the final makespan.
 
 Now consider scheduling the remaining job types $d+1, \ldots, n$. When we schedule $x_{d+1}$ copies of type $d+1$ (each with duration $d_{d+1}$), the first copy increases the makespan by $d_{d+1}$. Since all machines have equal load, the makespan increases by $d_{d+1}$ again only after placing copies on all $m$ machines. Therefore, scheduling $x_{d+1}$ copies increases the makespan by
 \begin{equation}
@@ -363,7 +372,7 @@ be a function such that there exists a constant $\beta \le 1$ fulfilling:
 \begin{enumerate}
     \item $\mathrm{approx}(x) \in \mathcal{L}(x)$ for all $x \in \mathcal{X}$,
     \item $
-    \beta \cdot c\bigl(x, y^*(x)\bigr)\le \beta \cdot c\bigl(x, \mathrm{approx}(x)\bigr) \le c\bigl(x, y^*(x)\bigr) \le c\bigl(x, \mathrm{approx}(x)\bigr) $
+    \beta \cdot c\bigl(x, y^*(x)\bigr)\le \beta \cdot c\bigl(x, \mathrm{approx}(x)\bigr) \le c\bigl(x, y^*(x)\bigr) \le c\bigl(x, \mathrm{approx}(x)\bigr) $,
 \end{enumerate}
 where $y^*(x)$ denotes an optimal lower-level solution for fixed $x$.
 
@@ -429,7 +438,11 @@ Recall that for any job selection $x$, the LPT makespan provides an upper bound 
 C_{\max}^{\text{LPT}}(x) \geq C_{\max}^{\text{OPT}}(x).
 \]
 
-Now suppose $x^*$ is an optimal solution to the Max-LPT problem, i.e., $x^* \in \arg\max_{c^Tx \leq B} C_{\max}^{\text{LPT}}(x)$. If we have that $C_{\max}^{\text{LPT}}(x^*) = C_{\max}^{\text{OPT}}(x^*)$, then for any other feasible job selection $x$ we have:
+Now suppose $x^*$ is an optimal solution to the Max-LPT problem, which means:
+\[
+x^* \in \arg\max_{c^Tx \leq B} C_{\max}^{\text{LPT}}(x).
+\]
+If we have that $C_{\max}^{\text{LPT}}(x^*) = C_{\max}^{\text{OPT}}(x^*)$, then for any other feasible job selection $x$ we have:
 \[
 C_{\max}^{\text{OPT}}(x^*) = C_{\max}^{\text{LPT}}(x^*) \geq C_{\max}^{\text{LPT}}(x) \geq C_{\max}^{\text{OPT}}(x).
 \]
