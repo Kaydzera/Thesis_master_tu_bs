@@ -116,15 +116,18 @@ Since we could not observe significant time differences between the different cr
 
 \section{Sensitivity Analysis: Single Parameter Scaling}
 
-Having verified correctness, we investigated how algorithm performance scales as individual problem parameters increase. For each parameter (number of job types, number of machines, budget multiplier), we conducted a systematic sensitivity analysis using a 1-hour time limit per instance. For each parameter value, 5 random instances were generated and solved using both the ceiling and MaxLPT bounds. The parameters were increased until we hit the time limit.
-
+Having verified correctness, we investigated how algorithm performance scales as individual problem parameters increase. 
+For each parameter (number of job types, number of machines, budget multiplier), we conducted a systematic sensitivity analysis using a 1-hour time limit per instance. 
+For each parameter value, we generated random instances and solved them using both the ceiling and MaxLPT bounds. The parameters were increased until we hit the time limit for both bounds.
+Starting points were chosen based on a few preliminary runs to get an idea of the initial instance difficulty and to ensure that the initial instances were solvable within the time limit without having to start from very small, trivial instances. 
+This approach allows us to observe the scaling behavior as parameters increase, allowing us to identify the practical limits of our approach.
 
 \textbf{Instance generation:} For each parameter setting, test instances were generated using the following procedure:
 \begin{itemize}
     \item Job prices: Uniformly random integers in [10, 100]
     \item Job durations: Uniformly random integers in [5, 50]
     \item Budget: $B = \text{budget multiplier} \times$ (average job cost) $\times$ (number of machines)
-    \item Baseline: 20 jobs, 10 machines, budget multiplier 2.5, node limit 1 billion, time limit 1 hour per instance, leaf timeout 15 minutes
+    \item Baseline: 20 jobs, 10 machines, budget multiplier 2.5, no node limit, time limit 1 hour per instance, leaf timeout 15 minutes
     \item Number of machines, jobs, and budget multiplier varied as specified
     \item Each instance uses a unique random seed for reproducibility
 \end{itemize}
@@ -422,8 +425,6 @@ The ceiling bound is slightly faster on average because the MaxLPT bound precomp
 The small negative mean and median indicate that the ceiling bound has a minor edge in these trivial cases, 
 but the MaxLPT bound is only marginally slower (and sometimes faster, which is likely due to natural runtime fluctuations, as the observed differences are very small and only occur for trivial instances). 
 Since no branching occurs, the computational cost is dominated by the computatation of the dynamic programming tables and the solution of the scheduling problem. 
-
-
 
 
 \section{Difficulty Analysis by Parameter Configuration}
