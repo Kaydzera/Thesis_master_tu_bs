@@ -97,18 +97,18 @@ We provide a brief overview of selected works relevant to our problem; for a com
 Dempe and Zemkoho~\cite{dempe2020bilevel} provide a comprehensive mathematical foundation for bilevel optimization, covering theory, optimality conditions, and solution approaches. Kleinert et al.~\cite{kleinert2021survey} offer an extensive survey on mixed-integer programming techniques in bilevel optimization, reviewing branch-and-bound methods, cutting planes, and decomposition approaches that form the algorithmic foundation for modern bilevel solvers.
 
 
-On the algorithmic side, Tahernejad, Ralphs, and DeNegre~\cite{Tahernejad2020} developed MibS, 
-a general-purpose solver for mixed-integer bilevel linear optimization problems. 
-MibS implements a comprehensive branch-and-cut algorithm that combines features from traditional MILP and bilevel methods with new techniques to create a flexible and robust solver.
-Fischetti et al.~\cite{fischetti2016intersection} used MibS as a benchmark to compare their proposed intersection cuts for Mixed-Integer Bilevel Linear Programs, 
-demonstrating that problem-specific cutting planes can significantly improve performance over general-purpose solvers. 
-In this thesis, we follow their approach by comparing our specialized branch-and-bound algorithm against MibS that is open source and available for public use to evaluate the benefits of problem-specific techniques versus general-purpose bilevel solvers.
-
 Most relevant to our work, Weninger and Fukasawa~\cite{weninger2025bilevel} recently developed a fast combinatorial branch-and-bound algorithm for the bilevel knapsack problem with interdiction constraints. 
 Their approach uses dynamic programming to compute strong lower bounds by solving a relaxed 2n-level version of the problem where items are processed in an online fashion. 
 This technique shares similarities with our method, as both employ branch-and-bound combined with dynamic programming to exploit problem structure. 
 However, their lower-level problem is a second knapsack optimization problem, whereas ours involves parallel machine scheduling, requiring different bounding techniques.
 
 Leitner et al.~\cite{leitner2023exact} further advanced the field by developing exact methods for three-level optimization problems (fortification games), demonstrating that problem-specific reformulations and specialized cuts can significantly outperform general approaches, solving instances with over 330,000 nodes to optimality.
+
+On the algorithmic side, Tahernejad, Ralphs, and DeNegre~\cite{Tahernejad2020} developed MibS, 
+a general-purpose solver for mixed-integer bilevel linear optimization problems. 
+MibS implements a comprehensive branch-and-cut algorithm that combines features from traditional MILP and bilevel methods with new techniques to create a flexible and robust solver.
+Fischetti et al.~\cite{fischetti2016intersection} used MibS as a benchmark to compare their proposed intersection cuts for Mixed-Integer Bilevel Linear Programs, 
+demonstrating that problem-specific cutting planes can significantly improve performance over general-purpose solvers. 
+In this thesis, we follow their approach by comparing our specialized branch-and-bound algorithm against MibS that is open source and available for public use to evaluate the benefits of problem-specific techniques versus general-purpose bilevel solvers.
 
 While the general bilevel optimization literature is extensive, our specific problem combining knapsack constraints in the upper level with parallel machine scheduling in the lower level represents a novel variant. The hierarchical structure with adversarial objectives (maximize vs. minimize makespan) distinguishes our problem from classical bilevel scheduling formulations, motivating the development of tailored solution methods that exploit the specific structure of the knapsack-scheduling problem.
