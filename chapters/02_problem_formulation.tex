@@ -66,16 +66,29 @@ where $L_k$ denotes the load on machine $k$, defined as the total processing tim
 
 \section{Complete Bilevel Formulation}
 
-We present a mixed-integer linear programming (MILP) formulation compatible with standard bilevel solvers such as MibS~\cite{Tahernejad2020}. The formulation uses a shared makespan variable $C_{\max}$ that appears in both levels:
+We now state the complete bilevel formulation of the Knapsack-Scheduling Problem.
+
+\begin{definition}[Knapsack-Scheduling Bilevel Problem]
+\label{def:ksp-bilevel}
+\begin{align}
+\max_{x\in\mathbb{Z}_+^n} \quad & C_{\max}^*(x) \label{eq:leader-obj}\\
+\text{s.t.} \quad & \sum_{i=1}^{n} p_i x_i \leq B \label{eq:budget}\\[0.5ex]
+\text{where}\quad C_{\max}^*(x) = \quad & \min_{y_{ik}\in\mathbb{Z}_+}\; \max_{k=1,\ldots,m}\; \sum_{i=1}^{n} d_i\, y_{ik} \label{eq:follower-obj}\\
+\text{s.t.} \quad & \sum_{k=1}^{m} y_{ik} = x_i \quad \forall\, i \in \{1, \ldots, n\} \label{eq:assign}\\
+& y_{ik} \in \mathbb{Z}_+ \quad \forall\, i,\, k \nonumber
+\end{align}
+\end{definition}
+
+The leader's variable $x_i$ counts how many jobs of type $i$ are selected; the follower's variable $y_{ik}$ counts how many of those jobs are assigned to machine $k$. The leader maximises $C_{\max}^*(x)$ while the follower, given $x$, minimises it — creating the adversarial hierarchical structure characteristic of bilevel optimisation.
+
+\paragraph{MILP reformulation.}
+For compatibility with standard bilevel solvers such as MibS~\cite{Tahernejad2020}, the follower's $\min$-$\max$ objective can be linearised by introducing an explicit makespan variable $\hat{C}_{\max}$:
 
 \begin{align}
-\max_{x} \quad & C_{\max} \label{eq:leader-obj}\\
-\text{s.t.} \quad & \sum_{i=1}^{n} p_i x_i \leq B \label{eq:budget}\\
-& x_i \in \mathbb{Z}_+ \quad \forall i \in \{1, \ldots, n\} \nonumber\\[1ex]
-\text{where } C_{\max} = \quad & \min_{y, \hat{C}_{\max}} \quad \hat{C}_{\max} \label{eq:follower-obj}\\
-\text{s.t.} \quad & \sum_{k=1}^{m} y_{ik} = x_i \quad \forall i \in \{1, \ldots, n\} \label{eq:assign}\\
-& \hat{C}_{\max} \geq \sum_{i=1}^{n} d_i y_{ik} \quad \forall k \in \{1, \ldots, m\} \label{eq:makespan}\\
-& y_{ik} \in \mathbb{Z}_+ \quad \forall i, k \nonumber
+C_{\max}^*(x) = \quad & \min_{y_{ik}\in\mathbb{Z}_+,\,\hat{C}_{\max}} \quad \hat{C}_{\max} \label{eq:follower-lp}\\
+\text{s.t.} \quad & \sum_{k=1}^{m} y_{ik} = x_i \quad \forall\, i \label{eq:assign-lp}\\
+& \hat{C}_{\max} \geq \sum_{i=1}^{n} d_i\, y_{ik} \quad \forall\, k \in \{1, \ldots, m\} \label{eq:makespan-lp}\\
+& y_{ik} \in \mathbb{Z}_+ \quad \forall\, i,\, k \nonumber
 \end{align}
 
 The leader's variables are $x_i$ (number of jobs of type $i$ to select) and the follower's variables are $y_{ik}$ (number of jobs of type $i$ assigned to machine $k$). The variables $C_{\max}$ and $\hat{C}_{\max}$ represent the makespan: the leader seeks to maximize it while the follower seeks to minimize it, creating the adversarial nature of the problem.

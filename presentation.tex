@@ -3,124 +3,88 @@
 %               with Adversarial Job Selection
 % Author: Ole Damke, TU Braunschweig, April 2026
 %
-% Compile with:  xelatex  (TEXINPUTS must include ./tex//)
-%   In VS Code the settings.json configures this automatically.
-%   From terminal:  $env:TEXINPUTS=".\tex\;"; xelatex presentation.tex
+% Compile:  $env:TEXINPUTS="./tex//;"; xelatex -interaction=nonstopmode presentation.tex
 % ===================================================================================
+% !TEX program = xelatex-nobiber
 
 \documentclass[fleqn,11pt,aspectratio=43]{beamer}
-
-% ---------------------------------------------------------------------------
-% Language
-% ---------------------------------------------------------------------------
 \usepackage[english]{babel}
+\usetheme[blue,dark,colorblocks]{tubs}
 
-% ---------------------------------------------------------------------------
-% TUBS Beamer theme  (files live in ./tex/ -- added to TEXINPUTS)
-% ---------------------------------------------------------------------------
-\usetheme[%
-  blue,%          blue secondary colour scheme
-  dark,%          dark header/footer
-  colorblocks,%   coloured block titles
-]{tubs}
-
-% ---------------------------------------------------------------------------
-% Fonts (XeLaTeX + Nexus OTF files in ./fonts/otf/)
-% ---------------------------------------------------------------------------
+% --- Fonts ---
 \usepackage{fontspec}
-\setmainfont{NexusSerifPro}[%
-  Path        = ./fonts/otf/,%
-  Extension   = .otf,%
-  UprightFont = *-Regular,%
-  BoldFont    = *-Bold]
-\setsansfont{NexusSansPro}[%
-  Path        = ./fonts/otf/,%
-  Extension   = .otf,%
-  UprightFont = *-Regular,%
-  BoldFont    = *-Bold]
+\setmainfont{NexusSerifPro}[
+  Path=./fonts/otf/, Extension=.otf,
+  UprightFont=*-Regular, BoldFont=*-Bold]
+\setsansfont{NexusSansPro}[
+  Path=./fonts/otf/, Extension=.otf,
+  UprightFont=*-Regular, BoldFont=*-Bold]
 
-% ---------------------------------------------------------------------------
-% Packages
-% ---------------------------------------------------------------------------
+% --- Packages ---
 \usepackage{graphicx}
-\usepackage{amsmath, amssymb}
+\usepackage{amsmath,amssymb}
 \usepackage{mathtools}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
 \usepackage{booktabs}
 \usepackage{tikz}
-\usetikzlibrary{trees, positioning, shapes.geometric, arrows.meta, calc}
-\usepackage{csquotes}
+\usetikzlibrary{trees,positioning,arrows.meta}
 
-% ---------------------------------------------------------------------------
-% Math macros
-% ---------------------------------------------------------------------------
+% --- Math macros ---
 \newcommand{\Cmax}{C_{\max}}
-\newcommand{\Copt}{C_{\max}^{\text{OPT}}}
-\newcommand{\Clpt}{C_{\max}^{\text{LPT}}}
-\newcommand{\Cinc}{C_{\max}^{\text{inc}}}
-\newcommand{\Brem}{B_{\text{rem}}}
-\newcommand{\UB}{\text{UB}}
-\DeclareMathOperator*{\argmin}{arg\,min}
-\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\Copt}{C_{\max}^{*}}
+\newcommand{\Clpt}{C_{\max}^{\mathrm{LPT}}}
+\newcommand{\Cinc}{C_{\max}^{\mathrm{inc}}}
+\newcommand{\Brem}{B_{\mathrm{rem}}}
+\newcommand{\UB}{\mathrm{UB}}
 
-% ---------------------------------------------------------------------------
-% Title slide metadata
-% ---------------------------------------------------------------------------
-\title{A Branch-and-Bound Method for Bilevel Parallel Machine Scheduling with Adversarial Job Selection}
+% --- Title metadata  (SHORT title keeps the footer from overflowing) ---
+\title[B\&B for Bilevel Parallel Machine Scheduling]{%
+  A Branch-and-Bound Method for Bilevel\\
+  Parallel Machine Scheduling with\\
+  Adversarial Job Selection}
 \subtitle{Master Thesis Presentation}
 \author{Ole Damke}
-\institute{Institut für Mathematische Optimierung\\Technische Universität Braunschweig}
+\institute{Institut für Mathematische Optimierung\\
+  Technische Universität Braunschweig}
 \date{April 2026}
-
-% Title-page background image (the TU building photo from the theme assets)
 \titlegraphic[scaled]{\includegraphics{tex/logos/titlepicture.jpg}}
 
-% ===========================================================================
+% ===================================================================================
 \begin{document}
-% ===========================================================================
+% ===================================================================================
 
-% ---------------------------------------------------------------------------
-% TITLE SLIDE
-% ---------------------------------------------------------------------------
 \begin{frame}[plain]
   \titlepage
 \end{frame}
 
-% ---------------------------------------------------------------------------
-% OUTLINE
-% ---------------------------------------------------------------------------
 \begin{frame}{Outline}
   \tableofcontents
 \end{frame}
 
-% ===========================================================================
+% ===================================================================================
 \section{Motivation \& Problem}
-% ===========================================================================
+% ===================================================================================
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Motivation}
+\begin{frame}[shrink=5]{Motivation}
   \begin{columns}[T]
-    \begin{column}{0.58\textwidth}
+    \begin{column}{0.57\textwidth}
       \textbf{Scenario: production facility}
       \begin{itemize}
-        \item Manager must decide \emph{which jobs to accept} within a fixed budget
-        \item Scheduler will assign jobs to machines to \emph{minimise} completion time
-        \item Manager needs a \textbf{worst-case guarantee}: what is the maximum possible makespan?
+        \item Manager decides \emph{which jobs to accept} (budget constraint)
+        \item Scheduler assigns jobs to machines — \emph{minimises} completion time
+        \item Manager needs a worst-case guarantee on the makespan
       \end{itemize}
-      \vspace{0.8em}
       This is a \textbf{bilevel optimisation problem}:
       \begin{itemize}
-        \item \textbf{Leader} (manager): adversarially selects jobs to \emph{maximise} makespan
-        \item \textbf{Follower} (scheduler): schedules jobs to \emph{minimise} makespan
+        \item \textbf{Leader} (manager): selects jobs to \emph{maximise} makespan
+        \item \textbf{Follower} (scheduler): \emph{minimises} makespan
       \end{itemize}
     \end{column}
-    \begin{column}{0.38\textwidth}
-      \begin{block}{Our problem combines}
+    \begin{column}{0.40\textwidth}
+      \begin{block}{Our problem}
         \textbf{Upper level (Leader)}\\
-        Unbounded Knapsack\\[0.4em]
-        $\downarrow$ selects job portfolio\\[0.4em]
-        \textbf{Lower level (Follower)}\\
+        Unbounded knapsack\\[0.25em]
+        \centering$\downarrow$ job portfolio\\[0.25em]
+        \raggedright\textbf{Lower level (Follower)}\\
         Parallel machine scheduling\\
         ($P\,||\Cmax$)
       \end{block}
@@ -128,627 +92,566 @@
   \end{columns}
 \end{frame}
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Bilevel Optimisation Framework}
-  \begin{block}{Definition (Bilevel Optimisation Problem)}
+% --- Split from what was one overflowing "Bilevel Optimisation Framework" frame ---
+\begin{frame}[shrink=5]{Bilevel Optimisation: Definition}
+  \begin{block}{Bilevel Optimisation Problem}
     \vspace{-0.3em}
     \begin{align*}
-      \max_{x} \quad & F(x,\, y^*(x))\\
-      \text{s.t.}\quad & x \in X\\[0.4em]
-      \text{where}\quad & y^*(x) \in \arg\min_{y}\{f(x,y) : y \in Y(x)\}
+      \max_{x}\quad & F\bigl(x,\,y^*(x)\bigr) & &x\in X\\
+      \text{where}\quad & y^*(x)\in\arg\min_{y}\,\{f(x,y):y\in Y(x)\}
     \end{align*}
+    \vspace{-0.4em}
   \end{block}
-  \vspace{0.3em}
   \begin{itemize}
-    \item The \textbf{leader} chooses $x$, anticipating the follower's optimal response $y^*(x)$
-    \item The \textbf{follower} observes $x$ and optimises their own objective
-    \item \textbf{Optimistic formulation}: if follower has multiple optima, pick the one best for the leader
+    \item \textbf{Leader} chooses $x$, \emph{anticipating} the follower's optimal response
+    \item \textbf{Follower} observes $x$ and minimises their own objective
+    \item \textbf{Optimistic}: if follower is indifferent, choose the outcome best for the leader
   \end{itemize}
-  \vspace{0.5em}
+\end{frame}
+
+\begin{frame}[shrink=5]{Bilevel Optimisation: Hardness}
   \begin{alertblock}{Computational difficulty}
-    Bilevel optimisation is $\Sigma_2^P$-hard in general.
-    Our variant combines two NP-hard subproblems (knapsack + scheduling) with a
-    non-convex, discontinuous value function $\Copt(x)$.
+    Bilevel optimisation is NP-hard in general~\cite{frangioni1995}.
   \end{alertblock}
-\end{frame}
-
-% ---------------------------------------------------------------------------
-\begin{frame}{The Knapsack-Scheduling Problem}
-  \textbf{Problem data:} $n$ job types, $m$ identical parallel machines, budget $B > 0$
-  \begin{itemize}
-    \item Job type $i$: duration $d_i > 0$, cost $p_i > 0$;\quad items sorted $d_1 \geq \cdots \geq d_n$
-  \end{itemize}
-  \vspace{0.5em}
-  \begin{columns}[T]
-    \begin{column}{0.49\textwidth}
-      \begin{block}{Leader (Upper Level)}
-        \vspace{-0.4em}
-        \begin{align*}
-          \max_{x \in \mathbb{Z}_+^n} \quad & \Copt(x)\\
-          \text{s.t.}\quad & \textstyle\sum_{i=1}^{n} p_i x_i \leq B
-        \end{align*}
-        \vspace{-0.3em}
-        $x_i$ = \# jobs of type $i$ selected
-      \end{block}
-    \end{column}
-    \begin{column}{0.49\textwidth}
-      \begin{block}{Follower (Lower Level)}
-        \vspace{-0.4em}
-        \begin{align*}
-          \Copt(x) = \min_{y \in \mathbb{Z}_+^{n\times m}} \quad & \max_{k} L_k\\
-          \text{s.t.}\quad & \textstyle\sum_k y_{ik} = x_i\;\forall i
-        \end{align*}
-        \vspace{-0.3em}
-        $L_k = \sum_i d_i y_{ik}$: load on machine $k$
-      \end{block}
-    \end{column}
-  \end{columns}
-  \vspace{0.5em}
-  Leader \textbf{maximises} $\Copt(x)$;\quad follower \textbf{minimises} it.
-  The follower's problem is solved optimally via integer programming (Gurobi).
-\end{frame}
-
-% ---------------------------------------------------------------------------
-\begin{frame}{Why Enumeration Fails}
-  \begin{columns}[T]
-    \begin{column}{0.58\textwidth}
-      Naive approach: enumerate all feasible $x$, solve follower for each.
-
-      \medskip
-      Max copies of type $i$: $x_i \leq \lfloor B / p_i \rfloor$
-
-      \medskip
-      Search space upper bound:
-      \[
-        \prod_{i=1}^{n} \!\left(\!\left\lfloor \tfrac{B}{p_i}\right\rfloor + 1\!\right)
-      \]
-      \begin{block}{Example}
-        $n = 10$,\; $B = 100$,\; $p_i = 5+i$\\[0.3em]
-        Upper bound: $\mathbf{5.29 \times 10^{10}}$ combinations\\[0.3em]
-        At 1\,ms per solve: $\approx$ \textbf{1.68 years}
-      \end{block}
-    \end{column}
-    \begin{column}{0.38\textwidth}
-      \centering
-      \begin{tikzpicture}[scale=0.8,
-          nd/.style={draw, rectangle, rounded corners=2pt,
-            font=\tiny, align=center, minimum width=1.7cm, minimum height=0.75cm},
-          >=stealth]
-        \node[nd] (r) at (0,3.2) {\textbf{Root}\\$d=0$};
-        \node[nd] (n1) at (-1.7,2.0) {$d=1$\\$x_1=0$};
-        \node[nd] (n2) at (0,2.0)    {$d=1$\\$x_1=1$};
-        \node[nd] (n3) at (1.7,2.0)  {$d=1$\\$x_1=2$};
-        \node[nd] (l1) at (-2.2,0.7) {\tiny$x_2=0$};
-        \node[nd] (l2) at (-1.1,0.7) {\tiny$x_2=1$};
-        \node[nd] (l3) at (0,0.7)    {\tiny$x_2=0$};
-        \node[nd] (l4) at (1.7,0.7)  {\tiny$x_2=0$};
-        \draw[->] (r)--(n1); \draw[->] (r)--(n2); \draw[->] (r)--(n3);
-        \draw[->] (n1)--(l1); \draw[->] (n1)--(l2);
-        \draw[->] (n2)--(l3); \draw[->] (n3)--(l4);
-        \node[font=\tiny] at (0,-0.05) {$p_1{=}5,\;p_2{=}8,\;B{=}10$};
-      \end{tikzpicture}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% ===========================================================================
-\section{Branch-and-Bound Algorithm}
-% ===========================================================================
-
-% ---------------------------------------------------------------------------
-\begin{frame}{Branch-and-Bound: Overview}
-  \textbf{Core idea:} explore a search tree; prune branches that cannot beat the incumbent.
-
-  \medskip
-  Three components:
-  \begin{enumerate}
-    \item \textbf{Branching} — fix the next item quantity $x_{d+1}$
-    \item \textbf{Bounding} — compute an upper bound on the best makespan reachable from a node
-    \item \textbf{Pruning} — discard if $\UB \leq \Cinc$
-  \end{enumerate}
-
-  \medskip
-  \begin{block}{Node at depth $d$}
+  \begin{block}{Our specific challenge}
     \begin{itemize}
-      \item \textbf{Fixed quantities:} $x_1, \ldots, x_d$
-      \item \textbf{Remaining budget:} $\Brem = B - \sum_{i=1}^{d} p_i x_i$
-      \item \textbf{Machine loads:} LPT schedule for items $1,\ldots,d$ — maintained \emph{incrementally}
-      \item \textbf{Children:} branch on $x_{d+1} = 0, 1, \ldots, \lfloor \Brem / p_{d+1} \rfloor$
+      \item \textbf{Leader} solves an unbounded knapsack (NP-hard)
+      \item \textbf{Follower} solves parallel machine scheduling $P||\Cmax$ (NP-hard)
+      \item Value function $\Copt(x)$ is \emph{non-convex} and \emph{discontinuous}
+      \item No closed-form expression for $\Copt(x)$: every evaluation requires solving the follower, which implies the use of combinatorial approaches (e.g.\ branch-and-bound) at the upper level
     \end{itemize}
   \end{block}
+  \begin{block}{Consequence}
+    General-purpose bilevel solvers (e.g.\ MibS) can handle only very small instances.
+    We need a \textbf{problem-specific exact algorithm}.
+  \end{block}
 \end{frame}
 
-% ---------------------------------------------------------------------------
-\begin{frame}{The LPT Rule as Follower's Algorithm}
+\begin{frame}[shrink=5]{The Knapsack-Scheduling Problem}
+  \textbf{Problem data:}
+  \begin{itemize}
+    \item $n$ job types, $m$ identical parallel machines, budget $B>0$
+    \item Job type $i$: processing time $d_i>0$, cost $p_i>0$; w.l.o.g.\ $d_1\geq\cdots\geq d_n$
+    \item \textbf{Leader} selects $x_i\in\mathbb{Z}_+$ copies of type $i$;
+          \textbf{follower} assigns $y_{ik}\in\mathbb{Z}_+$ jobs of type $i$ to machine $k$
+  \end{itemize}
+  \begin{block}{Complete Bilevel Formulation}
+    \vspace{-0.2em}
+    \begin{align*}
+      \max_{x\in\mathbb{Z}_+^n}\quad & \Copt(x)\\
+      \text{s.t.}\quad & \textstyle\sum_{i=1}^{n}p_ix_i\leq B\\[0.4em]
+      \text{where}\quad\Copt(x)\;=\;& \min_{y_{ik}\in\mathbb{Z}_+}\;\max_{k=1,\ldots,m}\;\sum_{i=1}^{n}d_i y_{ik}\\
+      \text{s.t.}\quad & \textstyle\sum_{k=1}^{m}y_{ik}=x_i\quad\forall\,i
+    \end{align*}
+    \vspace{-0.3em}
+  \end{block}
+  \smallskip
+  Leader \textbf{maximises} $\Copt(x)$; follower \textbf{minimises} it — an adversarial bilevel structure.
+\end{frame}
+
+
+
+
+\begin{frame}{Why Enumeration Fails}
+  Naive approach: enumerate every feasible $x$, solve the follower for each.
+  \[
+    \text{Search space} \leq \prod_{i=1}^{n}\!\left(\!\left\lfloor\tfrac{B}{p_i}\right\rfloor+1\right)
+  \]
+  \begin{block}{Example: $n=10$, $B=100$, $p_i=5{+}i$}
+    Upper bound: $\mathbf{5.29\times 10^{10}}$ candidates\\[0.2em]
+    At 1\,ms per follower solve: $\approx\mathbf{1.68\text{ years}}$
+  \end{block}
+  \bigskip
+  \textbf{Solution:} Branch-and-Bound with tight upper bounds to prune the tree aggressively.
+\end{frame}
+
+\begin{frame}{Search Tree Structure}
+  \begin{center}
+  \begin{tikzpicture}[scale=1.0,
+      nd/.style={draw,rectangle,rounded corners=3pt,
+        font=\small,align=center,minimum width=2.0cm,minimum height=0.8cm},>=stealth]
+    \node[nd](r)  at (0,4.2)    {\textbf{Root}\\$d=0$};
+    \node[nd](n1) at (-3.2,2.6) {$x_1=0$};
+    \node[nd](n2) at (0,2.6)    {$x_1=1$};
+    \node[nd](n3) at (3.2,2.6)  {$x_1=2$};
+    \node[nd](l1) at (-4.2,0.8) {$x_2=0$};
+    \node[nd](l2) at (-2.1,0.8) {$x_2=1$};
+    \node[nd](l3) at (0,0.8)    {$x_2=0$};
+    \node[nd](l4) at (3.2,0.8)  {$x_2=0$};
+    \draw[->](r)--(n1);\draw[->](r)--(n2);\draw[->](r)--(n3);
+    \draw[->](n1)--(l1);\draw[->](n1)--(l2);
+    \draw[->](n2)--(l3);\draw[->](n3)--(l4);
+    \node[font=\footnotesize,gray] at (0,-0.2)
+      {Example: $n=2$ types, $p_1=5$, $p_2=8$, $B=10$};
+  \end{tikzpicture}
+  \end{center}
+  \smallskip
+  Each \textbf{leaf} requires one follower (scheduling) solve.
+  With large $n$ and $B$ the tree has billions of leaves $\Rightarrow$ intractable.
+\end{frame}
+
+% ===================================================================================
+\section{Branch-and-Bound Algorithm}
+% ===================================================================================
+
+\begin{frame}[shrink=8]{Branch-and-Bound: Overview}
+  \begin{block}{Node structure at depth $d$}
+    \begin{itemize}
+      \item \textbf{Fixed decisions:} $x_1,\ldots,x_d$\quad
+            $\Brem = B - \sum_{i=1}^{d}p_ix_i$
+      \item \textbf{Machine loads:} incremental LPT schedule for items $1,\ldots,d$
+      \item \textbf{Children:} $x_{d+1}=0,1,\ldots,\lfloor\Brem/p_{d+1}\rfloor$
+    \end{itemize}
+  \end{block}
   \begin{columns}[T]
-    \begin{column}{0.52\textwidth}
-      \textbf{Longest Processing Time (LPT) rule} [Graham 1969]:
+    \begin{column}{0.47\textwidth}
+      \textbf{Three components:}
+      \begin{enumerate}
+        \item \textbf{Branching} — fix $x_{d+1}$
+        \item \textbf{Bounding} — compute $\UB(d,\Brem)$
+        \item \textbf{Pruning} — discard if $\UB\leq\Cinc$
+      \end{enumerate}
+    \end{column}
+    \begin{column}{0.50\textwidth}
+      \textbf{Design choices:}
+      \begin{itemize}
+        \item Depth-first $\to$ fast incumbent updates $\to$ aggressive pruning
+        \item Incremental LPT: $O(m)$ per node
+        \item DP precomputed: $O(1)$ bound lookups
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=5]{The LPT Rule — Follower's Heuristic}
+  \begin{columns}[T]
+    \begin{column}{0.53\textwidth}
+      \textbf{Longest Processing Time (LPT)} [Graham~1969]:
       \begin{itemize}
         \item Sort jobs by non-increasing duration
-        \item Greedily assign each job to the \emph{least-loaded} machine
+        \item Assign each to the \emph{least-loaded} machine
       \end{itemize}
-      \vspace{0.4em}
-      \textbf{Key property:} LPT is a $\frac{4}{3}$-approximation for $P\,||\Cmax$
-
-      \vspace{0.5em}
-      \begin{alertblock}{Incremental update}
-        When branching from depth $d$ to $d+1$:\\
-        add $x_{d+1}$ jobs of duration $d_{d+1}$ to the running LPT state.\\[0.2em]
-        \emph{No full recomputation!}
+      \textbf{Guarantee:}\quad $\Copt(x)\leq\Clpt(x)\leq\tfrac{4}{3}\Copt(x)$
+      \begin{alertblock}{Incremental updates}
+        Branching $d\to d{+}1$: append $x_{d+1}$ jobs of duration $d_{d+1}$.
+        Reuse the existing sorted machine-load state — \textbf{no full recompute!}
       \end{alertblock}
     \end{column}
     \begin{column}{0.44\textwidth}
-      \begin{block}{LPT Scheduling}
+      \begin{block}{LPT algorithm}
         \footnotesize
-        \textbf{Input:} jobs sorted desc., $m$ machines\\
-        $L_1 = \cdots = L_m \leftarrow 0$\\[0.3em]
-        \textbf{for} each job $j$ (desc. $d_j$):\\
-        \quad $k^* \leftarrow \arg\min_k L_k$\\
-        \quad $L_{k^*} \leftarrow L_{k^*} + d_j$\\[0.3em]
-        \textbf{return} $\Clpt = \max_k L_k$
+        $L_1=\cdots=L_m\leftarrow 0$\\[0.15em]
+        \textbf{for} each job $j$ (desc.\ order):\\
+        \quad $k^*\leftarrow\arg\min_k L_k$\\
+        \quad $L_{k^*}\leftarrow L_{k^*}+d_j$\\[0.15em]
+        \textbf{return} $\Clpt=\max_k L_k$\\[0.2em]
+        \normalsize Time: $O(J\log m)$
       \end{block}
-      \vspace{0.4em}
-      Complexity: $O(J \log m)$\\[0.2em]
-      \footnotesize Often \textbf{optimal} in practice — confirmed in our experiments.
+      \textbf{Practice:} LPT is \emph{optimal} in $\approx84\%$ of our test instances.
     \end{column}
   \end{columns}
 \end{frame}
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Pruning via Upper Bounds}
-  At depth $d$ with remaining budget $\Brem$:
+\begin{frame}[shrink=5]{Pruning via Upper Bounds}
+  At depth $d$ with remaining budget $\Brem$, we compute an \emph{upper bound}:
+  \[\Copt(x_1,\ldots,x_n)\;\leq\;\UB(x_1,\ldots,x_d,\Brem)
+    \quad\forall\text{ completions }x_{d+1},\ldots,x_n\]
+  \textbf{Prune} whenever $\;\UB\leq\Cinc$.
   \[
-    \max_{\substack{x_{d+1},\ldots,x_n \geq 0 \\ \sum_{i>d} p_i x_i \leq \Brem}}
-    \Copt(x_1,\ldots,x_n)
-    \;\leq\;
-    \UB(x_1,\ldots,x_d,\,\Brem)
+    \UB = \underbrace{C_{\max}^{\mathrm{LPT},(d)}}_{\text{fixed items 1..}d}
+         +\;\max_{\sum_{i>d}p_iy_i\leq\Brem}
+           \underbrace{\Delta(y_{d+1},\ldots,y_n)}_{\text{extra makespan from remaining items}}
   \]
-
-  \textbf{Prune whenever:}
-  \(\quad \UB(x_1,\ldots,x_d,\,\Brem) \;\leq\; \Cinc\)
-
-  \bigskip
-  \textbf{Upper bound decomposition:}
-  \[
-    \UB = \underbrace{C_{\max}^{\text{LPT},(d)}}_{\text{fixed items}}
-          +\ \underbrace{\text{best extra contribution from items } d{+}1,\ldots,n}_{\text{relaxation}}
-  \]
-
-  \medskip
-  We develop \textbf{two relaxations}:
-  \begin{itemize}
-    \item \textbf{Ceiling bound} — knapsack scheduling relaxation using $\lceil y_i/m \rceil$
-    \item \textbf{Max-LPT bound} — maximise LPT makespan over remaining items
-  \end{itemize}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Ceiling bound}
+        $\Delta = \sum_{i>d}d_i\lceil y_i/m\rceil$\\
+        Single DP table, $O(1)$ lookup
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Max-LPT bound}
+        $\Delta = \Clpt(y_{d+1},\ldots) - C_{\max}^{\mathrm{LPT},(d)}$\\
+        DP table per depth, tighter bound
+      \end{block}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-% ===========================================================================
+% ===================================================================================
 \section{The Ceiling Bound}
-% ===========================================================================
+% ===================================================================================
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Ceiling Bound: Formulation}
+\begin{frame}[shrink=5]{Ceiling Bound: Formulation}
   \begin{block}{Knapsack Scheduling Relaxation}
-    \vspace{-0.4em}
-    \[
-      \UB = C_{\max}^{\text{LPT},(d)}
-      +\;
-      \max_{y_{d+1},\ldots,y_n \geq 0}\; \sum_{i=d+1}^{n} d_i \left\lceil \frac{y_i}{m} \right\rceil
-      \quad\text{s.t.}\quad
-      \sum_{i=d+1}^{n} p_i y_i \leq \Brem
-    \]
+    \vspace{-0.3em}
+    \[\UB = C_{\max}^{\mathrm{LPT},(d)}
+      \;+\;
+      \max_{y\geq 0}\;\sum_{i=d+1}^{n}d_i\!\left\lceil\frac{y_i}{m}\right\rceil
+      \quad\text{s.t.}\;\sum_{i>d}p_iy_i\leq\Brem\]
     \vspace{-0.3em}
   \end{block}
-  \textbf{Intuition:} on $m$ equally-loaded machines, adding $y_i$ jobs of type $i$ increases makespan by exactly $\lceil y_i/m\rceil \cdot d_i$ — an \emph{overestimate} since machines are rarely perfectly balanced.
-
-  \vspace{0.4em}
-  \begin{block}{DP implementation — $O(1)$ lookups at each node}
-    Reduce to standard knapsack. For each type $i$ create:
-    \begin{itemize}
-      \item Unit item: cost $p_i$, value $d_i$ \quad(covers 1 to $m{-}1$ copies)
-      \item Bulk package: cost $m\cdot p_i$, value $d_i$ \quad(batch of $m$)
+  \textbf{Intuition:} $\lceil y_i/m\rceil$ jobs of type $i$ on $m$ equal machines raise makespan by
+  $\lceil y_i/m\rceil\cdot d_i$ — always an \emph{overestimate}.
+  \begin{block}{DP implementation — $O(1)$ lookup per node}
+    \small Reduce to unbounded knapsack. For item type $i$:
+    \begin{itemize}\small
+      \item \textbf{Unit:} cost $p_i$, value $d_i$ (for $1,\ldots,m{-}1$ copies)
+      \item \textbf{Block:} cost $m\cdot p_i$, value $d_i$ (for a batch of $m$)
     \end{itemize}
-    \textbf{Precompute in reverse item order} $\Rightarrow$ depth-$d$ query is a single table lookup.
+    Precompute in reverse item order $\Rightarrow$ any depth-$d$ query is a direct table read.
   \end{block}
 \end{frame}
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Ceiling Bound: Validity Proof Sketch}
-  \begin{block}{Theorem (Upper Bound Validity)}
-    For any completion $(x_{d+1},\ldots,x_n)$: $\Copt(x_1,\ldots,x_n) \leq \UB$
+\begin{frame}[shrink=8]{Ceiling Bound: Validity Proof}
+  \begin{block}{Theorem}
+    For any feasible completion: $\Copt(x_1,\ldots,x_n)\leq\UB$
   \end{block}
   \textbf{Proof sketch:}
   \begin{enumerate}
-    \item LPT is $\frac43$-approx., so $\Copt(x) \leq \Clpt(x)$ for all $x$
-    \item After scheduling fixed items via LPT: makespan $= C_{\max}^{\text{LPT},(d)}$
-    \item \emph{Assume} all machines filled to $C_{\max}^{\text{LPT},(d)}$ (worst-case — only inflates bound)
-    \item Adding $y_i$ jobs of type $i$ on $m$ equally-loaded machines increases makespan by $\lceil y_i/m\rceil\cdot d_i$
-    \item Hence: $\Clpt(x) \leq C_{\max}^{\text{LPT},(d)} + \sum_{i>d}\lceil x_i/m\rceil d_i$
-    \item Maximise the RHS over the remaining budget $\Rightarrow$ bound \qquad $\square$
+    \item $\Copt(x)\leq\Clpt(x)$ (LPT over-schedules)
+    \item After fixed items, current makespan $= C_{\max}^{\mathrm{LPT},(d)}$
+    \item \emph{Assume} all machines filled to $C_{\max}^{\mathrm{LPT},(d)}$ — only inflates
+    \item On $m$ equal-load machines, adding $y_i$ jobs of type $i$ raises makespan by
+          $\lceil y_i/m\rceil\cdot d_i$
+    \item Therefore $\Clpt(x)\leq C_{\max}^{\mathrm{LPT},(d)}+\sum_{i>d}\lceil x_i/m\rceil\cdot d_i$
+    \item Maximising RHS over $\Brem$ gives $\UB\geq\Copt(x)$ \hfill$\square$
   \end{enumerate}
 \end{frame}
 
-% ===========================================================================
+% ===================================================================================
 \section{The Max-LPT Bound}
-% ===========================================================================
+% ===================================================================================
 
-% ---------------------------------------------------------------------------
-\begin{frame}{The Max-LPT Problem}
-  \begin{block}{Definition (Max-LPT Problem)}
-    Find $x \in \mathbb{Z}_+^n$ with $\sum_i p_i x_i \leq B$ that
-    \textbf{maximises} $\Clpt(x)$ — the makespan when jobs are scheduled by LPT on $m$ machines.
+\begin{frame}[shrink=8]{The Max-LPT Problem}
+  \begin{block}{Definition}
+    Find $x\in\mathbb{Z}_+^n$ with $\sum_i p_ix_i\leq B$ that \textbf{maximises}~$\Clpt(x)$.
   \end{block}
-
   \begin{columns}[T]
-    \begin{column}{0.55\textwidth}
-      \textbf{Two roles in the algorithm:}
+    \begin{column}{0.54\textwidth}
+      \textbf{Two roles:}
       \begin{enumerate}
-        \item Solve once at start $\Rightarrow$ \textbf{strong initial incumbent}
-        \item Solve for remaining items at each node $\Rightarrow$ \textbf{tighter upper bound}
+        \item Solved once $\Rightarrow$ \textbf{strong initial incumbent} (with $\tfrac34$-approx.\ guarantee)
+        \item Solved for remaining items at each node $\Rightarrow$ \textbf{tighter bound} than ceiling
       \end{enumerate}
-      \vspace{0.4em}
-      Tighter than ceiling bound because it respects the actual LPT structure instead of the relaxed $\lceil\cdot/m\rceil$ approximation.
+      Respects actual LPT structure (not just $\lceil\cdot/m\rceil$).
     \end{column}
-    \begin{column}{0.40\textwidth}
+    \begin{column}{0.43\textwidth}
       \begin{alertblock}{Key result}
-        Max-LPT can be solved \textbf{optimally} in $O(n \cdot B)$ via dynamic programming.
+        Max-LPT solved \textbf{optimally} in $O(n\cdot B)$ via DP.
+      \end{alertblock}
+      \begin{block}{Trade-off}
+        \small $n$ depth-specific DP tables vs.\ one ceiling table; recovered by better pruning.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=8]{Approximation Guarantee: Building Blocks}
+  \begin{block}{Lemma (Structure of $\alpha$-approximations)}
+    \vspace{-0.2em}
+    \small Let $\Clpt$ be a $\frac{4}{3}$-approx.\ for minimization. Then for all $x$:
+    \[\tfrac{3}{4}\,\Copt(x)\;\leq\;\tfrac{3}{4}\,\Clpt(x)\;\leq\;\Copt(x)\;\leq\;\Clpt(x)\]
+    \vspace{-0.3em}
+  \end{block}
+  \begin{block}{Theorem (Bilevel Approx.\ [Weninger \& Fukasawa 2025])}
+    \vspace{-0.2em}
+    \small If $\beta\,\Copt(x)\leq\Clpt(x)$ and $\hat x\in\arg\max_x\Clpt(x)$, then
+    \[\beta\cdot\mathrm{Opt}_{\text{bilevel}}\;\leq\;\Copt(\hat x)\;\leq\;\mathrm{Opt}_{\text{bilevel}}\]
+    \vspace{-0.3em}
+  \end{block}
+  \textbf{Combined:} with $\beta=\tfrac{3}{4}$ (LPT guarantee), solving Max-LPT gives an incumbent
+  within $25\%$ of optimal — \emph{before any B\&B search}.
+\end{frame}
+
+\begin{frame}[shrink=5]{The $\frac{3}{4}$-Approximation Guarantee}
+  \begin{block}{Theorem}
+    Let $\hat x$ be the Max-LPT solution and $x^*$ the bilevel-optimal solution. Then:
+    \[\tfrac{3}{4}\,\Copt(x^*)\;\leq\;\Copt(\hat x)\;\leq\;\Copt(x^*)\]
+  \end{block}
+  \textbf{Proof:}
+  \begin{itemize}
+    \item By LPT guarantee: $\tfrac34\,\Copt(x)\leq\tfrac34\,\Clpt(x)\leq\Copt(x)\leq\Clpt(x)$ for all $x$
+    \item $\hat x$ maximises $\Clpt$, so $\Clpt(x^*)\leq\Clpt(\hat x)$
+    \item Chain: $\tfrac34\,\Copt(x^*)\leq\tfrac34\,\Clpt(x^*)\leq\tfrac34\,\Clpt(\hat x)\leq\Copt(\hat x)\leq\Copt(x^*)$ \hfill$\square$
+  \end{itemize}
+  \begin{alertblock}{Practical implication}
+    The Max-LPT incumbent is \textbf{guaranteed $\leq 25\%$ suboptimal}.
+    In practice the gap is virtually always zero (LPT is often optimal).
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{Max-LPT Algorithm}
+  \textbf{Key observation:} the \emph{last} scheduled job lands on the least-loaded machine.
+  \[\Clpt = C_{\max}^{(m)} + d_I
+    \quad\text{where $C_{\max}^{(m)}$ = $m$-th largest load, $I$ = last job}\]
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \textbf{MAX-LPT algorithm:}\\[0.15em]
+      \small For each candidate last job $J$:
+      \begin{enumerate}\small
+        \item $B^*\leftarrow\lfloor B/m\rfloor$ (per-machine budget)
+        \item While $(B-mB^*)<p_J$: $B^*\leftarrow B^*-1$
+        \item $z\leftarrow\mathrm{DP}(J,B^*)+d_J$
+      \end{enumerate}
+      \normalsize Return $z^*=\max_J z$\quad [$O(n\cdot B)$]
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{block}{Correctness}
+        \small $B^*$: max per-machine budget for the least-loaded machine without job $J$'s cost.
+        $\mathrm{DP}(J,B^*)$: max load on that machine.
+        Adding $d_J$ gives the optimum makespan for this candidate last job.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===================================================================================
+\section{Early Optimality Detection}
+% ===================================================================================
+
+\begin{frame}[shrink=5]{Early Optimality Detection}
+  \begin{block}{Key inequality}
+    For all $x$: $\Copt(x)\leq\Clpt(x)$ (LPT only overestimates)
+  \end{block}
+  Let $\hat x\in\arg\max_x\Clpt(x)$. If $\Clpt(\hat x)=\Copt(\hat x)$, then for \emph{any} feasible $x$:
+  \[\Copt(\hat x)=\Clpt(\hat x)\geq\Clpt(x)\geq\Copt(x)\]
+  $\Rightarrow$ $\hat x$ is the \textbf{global bilevel optimum} — no B\&B tree needed!
+  \begin{alertblock}{Impact}
+    \begin{itemize}
+      \item $\Copt(\hat x)$ is computed anyway to initialise the incumbent
+      \item This check costs \textbf{nothing extra}
+      \item Triggered in $\approx\mathbf{84.4\%}$ of our test instances $\Rightarrow$ solved at root
+    \end{itemize}
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{Complete Algorithm}
+  \begin{columns}[T]
+    \begin{column}{0.53\textwidth}
+      \small
+      \begin{enumerate}
+        \item Solve Max-LPT $\to\hat x$;\quad compute $\Clpt(\hat x)$, $\Copt(\hat x)$
+        \item \textbf{If} $\Clpt(\hat x)=\Copt(\hat x)$: \textbf{return} $\hat x$
+              \hfill{\footnotesize (84\% of instances)}
+        \item $\Cinc\leftarrow\Copt(\hat x)$;\quad push root to stack $Q$
+        \item \textbf{While} $Q\neq\emptyset$:
+        \begin{itemize}\small
+          \item Pop node $(d,x_1,\ldots,x_d,\Brem)$
+          \item If $d=n$: solve follower; update $\Cinc$
+          \item Else: compute $\UB(d,\Brem)$
+          \item If $\UB\leq\Cinc$: \textbf{prune}
+          \item Else: push children (depth-first)
+        \end{itemize}
+        \item Return incumbent
+      \end{enumerate}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{block}{Leaf optimisation}
+        \small At depth $n{-}1$: only the child spending \emph{maximum} remaining budget matters.
+        All others produce a smaller or equal $\Copt$.
+      \end{block}
+      \begin{block}{Follower solver}
+        \small Gurobi 12.0.3 solves the MIP formulation of $P||\Cmax$ at leaves.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===================================================================================
+\section{Computational Experiments}
+% ===================================================================================
+
+\begin{frame}[shrink=5]{Experimental Setup}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \textbf{Hardware \& software:}
+      \begin{itemize}
+        \item AMD Ryzen 5 9600X, 32\,GB RAM
+        \item Python 3.11, Gurobi 12.0.3
+        \item Single-threaded runs
+      \end{itemize}
+      \textbf{PatternTestSet:} 140 instances\\
+      7 structural patterns:\\
+      \footnotesize Uniform Ratios, High Variance, Increasing, Random Moderate,
+      Extreme, Strong Correlation, Subset Sum\\
+      \normalsize 6--12 types, 3--8 machines, budget 15--50
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{block}{Correctness: vs.\ enumeration}
+        \begin{itemize}
+          \item 140 instances: \textbf{0 discrepancies}
+          \item Enumeration timed out on 15/140
+          \item B\&B solved all 140 in ms
+        \end{itemize}
+      \end{block}
+      \begin{alertblock}{Speed-up}
+        Up to $\mathbf{10^6\times}$ faster\\than complete enumeration
       \end{alertblock}
     \end{column}
   \end{columns}
 \end{frame}
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Approximation Guarantee — Two Lemmas}
-  \begin{block}{Lemma (Properties of $\alpha$-approximations)}
-    Let \texttt{approx} be an $\alpha$-approximation for a \emph{minimisation} problem, $\beta = 1/\alpha$. Then:
-    \[
-      \beta \cdot \mathrm{Opt} \;\leq\; \beta \cdot \mathrm{approx} \;\leq\; \mathrm{Opt} \;\leq\; \mathrm{approx}
-    \]
-  \end{block}
-  \vspace{0.3em}
-  \begin{block}{Theorem (Approximation \& Bilevel [Weninger \& Fukasawa 2025])}
-    If $\mathrm{approx}(x)$ satisfies $\beta\cdot\Copt(x)\leq\beta\cdot\Clpt(x)\leq\Copt(x)\leq\Clpt(x)$
-    for all $x$, and $\hat{x} \in \arg\max_x \Clpt(x)$, then:
-    \[
-      \beta \cdot \mathrm{Opt} \;\leq\; \Copt(\hat{x}) \;\leq\; \mathrm{Opt}
-    \]
-  \end{block}
-  \textbf{Proof of second theorem:} by optimality of $\hat{x}$ for Max-LPT, $\Clpt(x^*) \leq \Clpt(\hat{x})$. Chain together:
-  \[
-    \beta \cdot \mathrm{Opt}
-    = \beta\,\Copt(x^*)
-    \leq \beta\,\Clpt(x^*)
-    \leq \beta\,\Clpt(\hat{x})
-    \leq \Copt(\hat{x})
-    \leq \mathrm{Opt}.
-    \qquad \square
-  \]
-\end{frame}
+\begin{frame}[shrink=8]{Grid Sensitivity Analysis}
+  \textbf{Grid:} $6{\times}6$ (types $\times$ machines), 3 budget multipliers, 5 seeds $=540$ instances; 1\,h limit.
 
-% ---------------------------------------------------------------------------
-\begin{frame}{The $\frac{3}{4}$-Approximation Guarantee}
-  \begin{block}{Theorem ($\frac{3}{4}$-Approximation)}
-    Let $\hat{x}$ be optimal for Max-LPT and $x^*$ be optimal for the bilevel problem. Then:
-    \[
-      \frac{3}{4} \cdot \Copt(x^*) \;\leq\; \Copt(\hat{x}) \;\leq\; \Copt(x^*)
-    \]
-  \end{block}
-  \textbf{Proof:}
-  \begin{itemize}
-    \item Graham (1969): LPT is a $\frac{4}{3}$-approximation for $P\,||\,\Cmax$, so $\beta = \frac{3}{4}$
-    \item Lemma gives: $\tfrac{3}{4}\,\Copt(x) \leq \tfrac{3}{4}\,\Clpt(x) \leq \Copt(x) \leq \Clpt(x)$ for all $x$
-    \item These satisfy conditions of the Bilevel Theorem with $\beta = \tfrac{3}{4}$
-    \item Apply Bilevel Theorem $\Rightarrow$ result follows \hfill $\square$
-  \end{itemize}
-  \vspace{0.4em}
-  \begin{alertblock}{Practical implication}
-    Solving Max-LPT gives an incumbent \textbf{guaranteed} to be at most 25\% suboptimal.
-    In practice the gap is nearly zero — as our experiments confirm.
-  \end{alertblock}
-\end{frame}
-
-% ---------------------------------------------------------------------------
-\begin{frame}{Max-LPT Algorithm}
-  \textbf{Key observation:} in an optimal Max-LPT solution, the \emph{last scheduled} job $I$
-  lands on the \emph{least-loaded} machine. Makespan $= C_{\max}^{(m)} + d_I$.
-
-  \medskip
-  \begin{columns}[T]
-    \begin{column}{0.50\textwidth}
-      \textbf{Algorithm MAX-LPT:}\\[0.3em]
-      For each candidate last job $J \in \{1,\ldots,n\}$:
-      \begin{enumerate}
-        \item Set per-machine budget $B^* = \lfloor B/m \rfloor$
-        \item While $\hat{B} = B - m B^* < p_J$: reduce $B^*$
-        \item Lookup $\mathrm{DP}(J, B^*)$: best duration-sum for types $1,\ldots,J$ with budget $B^*$
-        \item Candidate makespan: $z = \mathrm{DP}(J, B^*) + d_J$
-      \end{enumerate}
-      Return $z^* = \max_J z$\quad — running time $O(n \cdot B)$
-    \end{column}
-    \begin{column}{0.46\textwidth}
-      \begin{block}{Why this is optimal}
-        \textbf{Property 1:} $B^*$ is the highest per-machine budget for the least-loaded machine\\[0.3em]
-        \textbf{Property 2:} DP$(J,B^*)$ gives the best load achievable on that machine\\[0.3em]
-        $\Rightarrow$ No combination can yield a larger $C_{\max}^{(m)}$ for the available budget.
-      \end{block}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% ===========================================================================
-\section{Early Optimality Detection}
-% ===========================================================================
-
-% ---------------------------------------------------------------------------
-\begin{frame}{Early Optimality Detection}
-  \begin{block}{Key fact}
-    For any $x$: \quad $\Clpt(x) \geq \Copt(x)$ \quad (LPT only overestimates optimal makespan)
-  \end{block}
-
-  \vspace{0.4em}
-  Let $x^*$ be the Max-LPT optimal solution: $x^* \in \arg\max_x \Clpt(x)$.\\[0.4em]
-  \textbf{If} $\Clpt(x^*) = \Copt(x^*)$ \textbf{then} for \emph{any} feasible $x$:
-  \[
-    \underbrace{\Copt(x^*)}_{\text{our solution}}
-    \;=\; \Clpt(x^*)
-    \;\geq\; \Clpt(x)
-    \;\geq\; \Copt(x)
-  \]
-  So $x^*$ is globally optimal — \textbf{no branch-and-bound search needed!}
-
-  \medskip
-  \begin{alertblock}{Practical significance}
-    \begin{itemize}
-      \item $\Copt(x^*)$ is computed anyway to initialise the incumbent (via Gurobi)
-      \item Checking $\Clpt(x^*) = \Copt(x^*)$ costs \textbf{nothing extra}
-      \item Occurs in $\approx \mathbf{84.4\%}$ of tested instances $\Rightarrow$ solved at the root node alone
-    \end{itemize}
-  \end{alertblock}
-\end{frame}
-
-% ---------------------------------------------------------------------------
-\begin{frame}{Full Branch-and-Bound Algorithm}
-  \begin{columns}[T]
-    \begin{column}{0.54\textwidth}
-      \footnotesize
-      \textbf{B\&B with early optimality detection:}
-      \begin{enumerate}
-        \item Solve Max-LPT $\to$ get $x_{\text{LPT}}$
-        \item Compute $\Clpt(x_{\text{LPT}})$ and $\Copt(x_{\text{LPT}})$
-        \item \textbf{If} $\Clpt = \Copt$:\ \textbf{return} $x_{\text{LPT}}$ \hfill\footnotesize\textcolor{blue!70!black}{$\leftarrow$ 84\% of instances}
-        \item $(x^*, \Cinc) \gets (x_{\text{LPT}}, \Copt(x_{\text{LPT}}))$
-        \item \textbf{While} queue $Q \neq \emptyset$:
-        \begin{itemize}\footnotesize
-          \item Pop node $x$ at depth $d$
-          \item If complete: solve follower, update $\Cinc$
-          \item Else: compute $\UB(x_1,\ldots,x_d,\Brem)$
-          \item If $\UB \leq \Cinc$: \textbf{prune}
-          \item Else: branch, add children to $Q$
-        \end{itemize}
-      \end{enumerate}
-    \end{column}
-    \begin{column}{0.42\textwidth}
-      \begin{block}{Design choices}
-        \begin{itemize}\footnotesize
-          \item \textbf{Depth-first search} for fast incumbent updates
-          \item \textbf{Incremental LPT} maintains machine loads $O(m)$ per node
-          \item \textbf{DP precomputation} makes every bound a $O(1)$ lookup
-          \item \textbf{Leaf optimisation}: only evaluate the leaf that spends the most remaining budget
-        \end{itemize}
-      \end{block}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% ===========================================================================
-\section{Computational Experiments}
-% ===========================================================================
-
-% ---------------------------------------------------------------------------
-\begin{frame}{Experimental Setup \& Correctness Verification}
-  \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
-      \textbf{Environment:}
-      \begin{itemize}
-        \item AMD Ryzen 5 9600X, 32\,GB RAM
-        \item Python 3.11; Gurobi 12.0.3; single-threaded
-      \end{itemize}
-      \vspace{0.4em}
-      \textbf{PatternTestSet:} 140 instances (7 patterns)\\[0.2em]
-      \footnotesize Uniform Ratios, High Variance, Increasing Complexity,
-      Random Moderate, Extreme, Strong Correlation, Subset Sum\\[0.2em]
-      6--12 job types, 3--8 machines, budget 15--50
-    \end{column}
-    \begin{column}{0.48\textwidth}
-      \begin{block}{Verification vs.\ complete enumeration}
-        \begin{itemize}
-          \item 140 instances, \textbf{zero discrepancies} in optimal makespan
-          \item Enumeration timed out on 15/140 (1\,h limit)
-          \item B\&B solved all 140 in milliseconds
-        \end{itemize}
-      \end{block}
-      \begin{block}{Speed-up}
-        Up to \textbf{6 orders of magnitude} faster than complete enumeration
-      \end{block}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-% ---------------------------------------------------------------------------
-\begin{frame}{Grid Sensitivity: Status Distribution}
-  \textbf{Grid:} $6{\times}6$ (job-types $\times$ machines), 3 budget multipliers, 5 seeds = 540 instances
-
-  \bigskip
-  \begin{center}
+  \begin{center}\small
   \begin{tabular}{lrrrr}
     \toprule
-    Budget mult. & Root Optimal & Completed & Timeout & Leaf T/O\\
+    Budget $\times$ & Root Opt. & Completed & Timeout & Leaf T/O\\
     \midrule
-    1.3 & 154\,--\,154 & 22\,--\,26 & 2\,--\,0 & 2\,--\,0 \\
-    2.5 & 150\,--\,150 & 19\,--\,22 & 3\,--\,0 & 8\,--\,8 \\
-    5.0 & 153\,--\,153 & 20\,--\,23 & 4\,--\,1 & 3\,--\,3 \\
+    $1.3\times$ & 154\,/\,154 & 22\,/\,26 & 2\,/\,0 & 2\,/\,0\\
+    $2.5\times$ & 150\,/\,150 & 19\,/\,22 & 3\,/\,0 & 8\,/\,8\\
+    $5.0\times$ & 153\,/\,153 & 20\,/\,23 & 4\,/\,1 & 3\,/\,3\\
     \bottomrule
-  \end{tabular}
+  \end{tabular}\\[0.2em]
+  \footnotesize Ceil\,/\,MaxLPT
   \end{center}
-  \vspace{0.2em}
-  \footnotesize Format: Ceiling bound\,--\,MaxLPT bound
 
-  \medskip
   \begin{columns}[T]
     \begin{column}{0.48\textwidth}
-      \begin{alertblock}{Key finding}
-        \textbf{84.6\%} of all instances solved at the root node by both bounds
+      \begin{alertblock}{Main finding}
+        $\mathbf{84.6\%}$ of instances solved at root —
+        no B\&B tree needed
       \end{alertblock}
     \end{column}
     \begin{column}{0.48\textwidth}
       \begin{block}{MaxLPT advantage}
-        More completed solves and fewer timeouts in every multiplier setting
+        More completions and fewer timeouts in every setting
       \end{block}
     \end{column}
   \end{columns}
 \end{frame}
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Ceiling vs.\ MaxLPT: Hard Instances}
-  Analysis of 61 non-root-optimal instances solved by both bounds:
-
-  \bigskip
+\begin{frame}[shrink=5]{Ceiling vs.\ MaxLPT: Hard Instances}
+  61 non-root-optimal instances where both bounds completed within 1\,h:
   \begin{columns}[T]
-    \begin{column}{0.48\textwidth}
+    \begin{column}{0.49\textwidth}
       \textbf{Runtime (Ceiling $-$ MaxLPT):}
       \begin{itemize}
-        \item Mean: \textbf{+71\,s} (ceiling slower)
-        \item Median: +0.4\,s
-        \item Max: \textbf{+1057\,s}
-        \item Ceiling faster: 20 times
-        \item MaxLPT faster: \textbf{41 times}
+        \item Mean: $+71$\,s (ceiling slower)
+        \item Median: $+0.4$\,s
+        \item Max: $+1{,}057$\,s
+        \item MaxLPT faster: \textbf{41 of 61 cases}
       \end{itemize}
     \end{column}
-    \begin{column}{0.48\textwidth}
-      \textbf{Node count (Ceiling $-$ MaxLPT):}
+    \begin{column}{0.49\textwidth}
+      \textbf{Nodes (Ceiling $-$ MaxLPT):}
       \begin{itemize}
-        \item Mean: \textbf{+4.8M nodes}
-        \item Median: +69K
-        \item Max: +54.5M
-        \item \textbf{MaxLPT always explores fewer nodes}
+        \item Mean: $+4.8$M nodes
+        \item Median: $+69$K
+        \item Max: $+54.5$M
+        \item MaxLPT always fewer nodes
       \end{itemize}
     \end{column}
   \end{columns}
-
-  \medskip
   \begin{block}{Interpretation}
-    MaxLPT provides tighter pruning in \emph{every} hard instance.
-    The cost of precomputing $n$ DP tables is fully recovered by the reduced node count.
+    \small MaxLPT prunes more aggressively on hard instances.
+    Precomputing $n$ DP tables is fully justified by the reduced node count.
+    Ceiling is marginally faster for trivial (root-optimal) cases.
   \end{block}
 \end{frame}
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Comparison with MibS Solver}
-  \textbf{MibS}: state-of-the-art general-purpose bilevel MILP solver [Tahernejad et al.\ 2020]
+\begin{frame}[shrink=5]{Comparison with MibS}
+  \textbf{MibS}: general-purpose bilevel MILP solver [Tahernejad et al.\ 2020]\\
+  \textbf{Subset:} $m\in\{4,8,12\}$, $j\in\{4,8,16,20\}$, 3 multipliers, 5 seeds $=180$ instances
 
-  \medskip
-  \textbf{Subset:} 180 instances, $m \in \{4,8,12\}$, $j \in \{4,8,16,20\}$, 3 multipliers, 5 seeds
-
-  \medskip
-  \begin{center}
+  \begin{center}\small
   \begin{tabular}{crrrr}
     \toprule
-    $m \,\backslash\, j$ & 4 & 8 & 16 & 20\\
+    $m\;\backslash\; j$ & 4 & 8 & 16 & 20\\
     \midrule
     4  & 15/15 & 8/15 & 2/15 & 1/15\\
     8  & 5/15  & 0/15 & 0/15 & 1/15\\
     12 & 2/15  & 0/15 & 0/15 & 0/15\\
     \bottomrule
-  \end{tabular}
+  \end{tabular}\\[0.2em]
+  {\footnotesize MibS completions (of 15) per cell. MaxLPT B\&B: \textbf{179/180}.}
   \end{center}
-  \vspace{0.15em}
-  \footnotesize MibS successes out of 15. Our MaxLPT B\&B solved \textbf{179/180}.
 
-  \medskip
-  \begin{alertblock}{Speedup over MibS (1\,h time limit)}
-    Ceiling: mean $+$2877\,s, median $+$3600\,s \quad
-    MaxLPT: mean $+$2960\,s, median $+$3600\,s\\[0.2em]
-    Instances MibS cannot solve in 1\,hour our algorithm solves in \textbf{milliseconds to seconds}.
+  \begin{alertblock}{Speed-up over MibS (1\,h limit)}
+    \small Ceiling: mean $+2{,}877$\,s, median $+3{,}600$\,s\quad
+    MaxLPT: mean $+2{,}960$\,s, median $+3{,}600$\,s\\
+    Problems solved by our algorithm in milliseconds require \textbf{over an hour} for MibS.
   \end{alertblock}
 \end{frame}
 
-% ===========================================================================
+% ===================================================================================
 \section{Conclusion}
-% ===========================================================================
+% ===================================================================================
 
-% ---------------------------------------------------------------------------
-\begin{frame}{Summary \& Conclusions}
+\begin{frame}[shrink=5]{Summary \& Conclusions}
   \begin{columns}[T]
-    \begin{column}{0.54\textwidth}
-      \textbf{Main contributions:}
+    \begin{column}{0.55\textwidth}
+      \textbf{Contributions:}
       \begin{enumerate}
-        \item Formal model: bilevel knapsack-scheduling
-        \item Ceiling bound with DP precomputation
-        \item Max-LPT problem: solved in $O(n \cdot B)$
-        \item $\frac{3}{4}$-approximation guarantee
-        \item \textbf{Early optimality detection} — 84\% solved at root
+        \item Formal bilevel knapsack-scheduling model
+        \item Ceiling bound with precomputed $O(1)$ DP
+        \item Max-LPT solved optimally in $O(n\cdot B)$
+        \item $\tfrac34$-approximation guarantee (theory)
+        \item Early optimality detection ($84\%$ solve at root)
         \item Comprehensive computational study
       \end{enumerate}
-      \vspace{0.4em}
-      Outperforms MibS by \textbf{orders of magnitude} on this problem class.
+      \smallskip
+      Outperforms MibS by \textbf{orders of magnitude}.
     \end{column}
     \begin{column}{0.42\textwidth}
       \begin{alertblock}{Limitations}
-        \begin{itemize}\small
-          \item No theory for when root-optimality holds
-          \item Exponential for $>30$ job types without root-solve
-          \item Parallel machines only
+        \small
+        \begin{itemize}
+          \item No characterisation of easy instances
+          \item Exponential worst-case for $>30$ types
+          \item Identical machines only
         \end{itemize}
       \end{alertblock}
       \begin{block}{Future work}
-        \begin{itemize}\small
-          \item Unrelated machines (ceiling bound promising)
+        \small
+        \begin{itemize}
+          \item Related/unrelated machines
           \item Stochastic processing times
-          \item Characterise easy instances theoretically
+          \item Characterise root-optimal instances
         \end{itemize}
       \end{block}
     \end{column}
   \end{columns}
 \end{frame}
 
-% ---------------------------------------------------------------------------
 \begin{frame}[plain]
   \begin{center}
-    \vspace{2.5cm}
-    {\huge\bfseries Thank you!}\\[1em]
-    {\Large Questions?}\\[2em]
-    \rule{8cm}{0.4pt}\\[0.6em]
-    {\small Ole Damke \quad\textbullet\quad \texttt{o.damke@tu-braunschweig.de}\\[0.3em]
-    Institut für Mathematische Optimierung \quad\textbullet\quad TU Braunschweig}
+    \vspace{3em}
+    {\huge\bfseries Thank you!}\\[0.8em]
+    {\Large Questions?}\\[1.6em]
+    \rule{8cm}{0.4pt}\\[0.4em]
+    {\small Ole Damke \;\textbullet\; \texttt{o.damke@tu-braunschweig.de}\\[0.2em]
+           Institut für Mathematische Optimierung \;\textbullet\; TU Braunschweig}
   \end{center}
 \end{frame}
 
-% ---------------------------------------------------------------------------
-% BACKUP SLIDES
-% ---------------------------------------------------------------------------
+% ===================================================================================
 \appendix
 
 \begin{frame}[allowframebreaks]{References}
   \footnotesize
   \begin{thebibliography}{9}
+    \bibitem{frangioni1995}
+      A.\,Frangioni. On a new class of bilevel programming problems and its use
+      for reformulating mixed integer problems.
+      \textit{Eur.~J.~Oper.~Res.}, 82(3):615--646, 1995.
     \bibitem{graham1969}
-      R.~L.~Graham. Bounds on Multiprocessor Timing Anomalies.
+      R.\,L.\,Graham. Bounds on Multiprocessor Timing Anomalies.
       \textit{SIAM J.\ Appl.\ Math.}, 17(2):416--429, 1969.
-
     \bibitem{weninger2025}
-      N.~Weninger, R.~Fukasawa. A fast combinatorial algorithm for the bilevel knapsack problem with interdiction constraints.
+      N.\,Weninger, R.\,Fukasawa. A fast combinatorial algorithm for the bilevel knapsack problem.
       \textit{Math.\ Program.}, 210(1):847--879, 2025.
-
     \bibitem{tahernejad2020}
-      S.~Tahernejad, T.~K.~Ralphs, S.~T.~DeNegre. A branch-and-cut algorithm for mixed integer bilevel linear optimisation problems.
+      S.\,Tahernejad, T.\,K.\,Ralphs, S.\,T.\,DeNegre. A branch-and-cut algorithm for mixed
+      integer bilevel linear optimisation.
       \textit{Math.\ Program.\ Comput.}, 12(4):529--568, 2020.
-
     \bibitem{kleinert2021}
-      T.~Kleinert et al. A survey on mixed-integer programming techniques in bilevel optimisation.
+      T.\,Kleinert et al. A survey on MIP techniques in bilevel optimisation.
       \textit{EURO J.\ Comput.\ Optim.}, 9:100007, 2021.
-
     \bibitem{dempe2020}
-      S.~Dempe, A.~Zemkoho. \textit{Bilevel Optimization}, vol.\ 161. Springer, 2020.
+      S.\,Dempe, A.\,Zemkoho. \textit{Bilevel Optimization}, vol.\,161. Springer, 2020.
   \end{thebibliography}
 \end{frame}
 
