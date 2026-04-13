@@ -22,6 +22,7 @@
 
 % --- Packages ---
 \usepackage{graphicx}
+\usepackage{url}
 \usepackage{amsmath,amssymb}
 \usepackage{mathtools}
 \usepackage{booktabs}
@@ -111,11 +112,58 @@
 
 \begin{frame}[shrink=5]{Bilevel Optimisation: Hardness}
   \begin{alertblock}{Computational difficulty}
-    Bilevel optimisation is NP-hard in general~\cite{frangioni1995}.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    Bilevel optimisation is NP-hard in general [Frangioni~1995].
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   \end{alertblock}
   \begin{block}{Our specific challenge}
     \begin{itemize}
-      \item \textbf{Leader} solves an unbounded knapsack (NP-hard)
+      \item \textbf{Leader} solves an unbounded knapsack problem (NP-hard)
       \item \textbf{Follower} solves parallel machine scheduling $P||\Cmax$ (NP-hard)
       \item Value function $\Copt(x)$ is \emph{non-convex} and \emph{discontinuous}
       \item No closed-form expression for $\Copt(x)$: every evaluation requires solving the follower, which implies the use of combinatorial approaches (e.g.\ branch-and-bound) at the upper level
@@ -141,7 +189,7 @@
       \max_{x\in\mathbb{Z}_+^n}\quad & \Copt(x)\\
       \text{s.t.}\quad & \textstyle\sum_{i=1}^{n}p_ix_i\leq B\\[0.4em]
       \text{where}\quad\Copt(x)\;=\;& \min_{y_{ik}\in\mathbb{Z}_+}\;\max_{k=1,\ldots,m}\;\sum_{i=1}^{n}d_i y_{ik}\\
-      \text{s.t.}\quad & \textstyle\sum_{k=1}^{m}y_{ik}=x_i\quad\forall\,i
+      \text{s.t.}\quad & \textstyle\sum_{k=1}^{m}y_{ik}=x_i\quad\forall\,i \in\{1,\ldots,n\}
     \end{align*}
     \vspace{-0.3em}
   \end{block}
@@ -207,7 +255,7 @@
     \begin{column}{0.47\textwidth}
       \textbf{Three components:}
       \begin{enumerate}
-        \item \textbf{Branching} — fix $x_{d+1}$
+        \item \textbf{Branching} — fix $x_{d}$
         \item \textbf{Bounding} — compute $\UB(d,\Brem)$
         \item \textbf{Pruning} — discard if $\UB\leq\Cinc$
       \end{enumerate}
@@ -241,7 +289,7 @@
       \begin{block}{LPT algorithm}
         \footnotesize
         $L_1=\cdots=L_m\leftarrow 0$\\[0.15em]
-        \textbf{for} each job $j$ (desc.\ order):\\
+        \textbf{for} each job $j$ (non-increasing order):\\
         \quad $k^*\leftarrow\arg\min_k L_k$\\
         \quad $L_{k^*}\leftarrow L_{k^*}+d_j$\\[0.15em]
         \textbf{return} $\Clpt=\max_k L_k$\\[0.2em]
@@ -271,7 +319,7 @@
     \end{column}
     \begin{column}{0.48\textwidth}
       \begin{block}{Max-LPT bound}
-        $\Delta = \Clpt(y_{d+1},\ldots) - C_{\max}^{\mathrm{LPT},(d)}$\\
+        $\Delta = \Clpt(y_{d+1},\ldots,y_n)$\\
         DP table per depth, tighter bound
       \end{block}
     \end{column}
@@ -348,20 +396,20 @@
 \end{frame}
 
 \begin{frame}[shrink=8]{Approximation Guarantee: Building Blocks}
-  \begin{block}{Lemma (Structure of $\alpha$-approximations)}
-    \vspace{-0.2em}
-    \small Let $\Clpt$ be a $\frac{4}{3}$-approx.\ for minimization. Then for all $x$:
-    \[\tfrac{3}{4}\,\Copt(x)\;\leq\;\tfrac{3}{4}\,\Clpt(x)\;\leq\;\Copt(x)\;\leq\;\Clpt(x)\]
-    \vspace{-0.3em}
+
+
+
+  \begin{block}{Theorem}
+    Let $\hat x$ be the Max-LPT solution and $x^*$ the bilevel-optimal solution. Then:
+    \[\tfrac{3}{4}\,\Copt(x^*)\;\leq\;\Copt(\hat x)\;\leq\;\Copt(x^*)\]
   \end{block}
+
   \begin{block}{Theorem (Bilevel Approx.\ [Weninger \& Fukasawa 2025])}
     \vspace{-0.2em}
-    \small If $\beta\,\Copt(x)\leq\Clpt(x)$ and $\hat x\in\arg\max_x\Clpt(x)$, then
+    \small For $\tfrac{3}{4} \leq 1$ and $\tfrac{3}{4}\,\Copt(x)\leq \tfrac{3}{4} \Clpt(x) \leq \Copt(x)\leq \Clpt(x)$ for all $x$, and $\hat x\in\arg\max_x\Clpt(x)$, then
     \[\beta\cdot\mathrm{Opt}_{\text{bilevel}}\;\leq\;\Copt(\hat x)\;\leq\;\mathrm{Opt}_{\text{bilevel}}\]
     \vspace{-0.3em}
   \end{block}
-  \textbf{Combined:} with $\beta=\tfrac{3}{4}$ (LPT guarantee), solving Max-LPT gives an incumbent
-  within $25\%$ of optimal — \emph{before any B\&B search}.
 \end{frame}
 
 \begin{frame}[shrink=5]{The $\frac{3}{4}$-Approximation Guarantee}
@@ -371,7 +419,7 @@
   \end{block}
   \textbf{Proof:}
   \begin{itemize}
-    \item By LPT guarantee: $\tfrac34\,\Copt(x)\leq\tfrac34\,\Clpt(x)\leq\Copt(x)\leq\Clpt(x)$ for all $x$
+    \item By LPT guarantee: $\tfrac34\,\Copt(x)\leq\tfrac34\,\Clpt(x)\leq \Copt(x)\leq\Clpt(x)$ for all $x$
     \item $\hat x$ maximises $\Clpt$, so $\Clpt(x^*)\leq\Clpt(\hat x)$
     \item Chain: $\tfrac34\,\Copt(x^*)\leq\tfrac34\,\Clpt(x^*)\leq\tfrac34\,\Clpt(\hat x)\leq\Copt(\hat x)\leq\Copt(x^*)$ \hfill$\square$
   \end{itemize}
@@ -416,7 +464,7 @@
   \end{block}
   Let $\hat x\in\arg\max_x\Clpt(x)$. If $\Clpt(\hat x)=\Copt(\hat x)$, then for \emph{any} feasible $x$:
   \[\Copt(\hat x)=\Clpt(\hat x)\geq\Clpt(x)\geq\Copt(x)\]
-  $\Rightarrow$ $\hat x$ is the \textbf{global bilevel optimum} — no B\&B tree needed!
+  $\Rightarrow$ $\hat x$ is the \textbf{global bilevel optimum} - no B\&B tree needed!
   \begin{alertblock}{Impact}
     \begin{itemize}
       \item $\Copt(\hat x)$ is computed anyway to initialise the incumbent
@@ -433,11 +481,10 @@
       \begin{enumerate}
         \item Solve Max-LPT $\to\hat x$;\quad compute $\Clpt(\hat x)$, $\Copt(\hat x)$
         \item \textbf{If} $\Clpt(\hat x)=\Copt(\hat x)$: \textbf{return} $\hat x$
-              \hfill{\footnotesize (84\% of instances)}
         \item $\Cinc\leftarrow\Copt(\hat x)$;\quad push root to stack $Q$
         \item \textbf{While} $Q\neq\emptyset$:
         \begin{itemize}\small
-          \item Pop node $(d,x_1,\ldots,x_d,\Brem)$
+          \item Remove node $(d,x_1,\ldots,x_d,\Brem)$
           \item If $d=n$: solve follower; update $\Cinc$
           \item Else: compute $\UB(d,\Brem)$
           \item If $\UB\leq\Cinc$: \textbf{prune}
@@ -445,6 +492,8 @@
         \end{itemize}
         \item Return incumbent
       \end{enumerate}
+      \smallskip
+      {\footnotesize Inspired by [Weninger \& Fukasawa 2025].}
     \end{column}
     \begin{column}{0.44\textwidth}
       \begin{block}{Leaf optimisation}
@@ -452,7 +501,7 @@
         All others produce a smaller or equal $\Copt$.
       \end{block}
       \begin{block}{Follower solver}
-        \small Gurobi 12.0.3 solves the MIP formulation of $P||\Cmax$ at leaves.
+        \small Gurobi 12.0.3 [Gurobi Optimization 2024] solves the MIP formulation of $P||\Cmax$ at leaves.
       \end{block}
     \end{column}
   \end{columns}
@@ -570,8 +619,8 @@
   \end{center}
 
   \begin{alertblock}{Speed-up over MibS (1\,h limit)}
-    \small Ceiling: mean $+2{,}877$\,s, median $+3{,}600$\,s\quad
-    MaxLPT: mean $+2{,}960$\,s, median $+3{,}600$\,s\\
+    \small Ceiling: mean $+2{,}876.6$\,s, median $+3{,}599.9$\,s\quad
+    MaxLPT: mean $+2{,}959.6$\,s, median $+3{,}599.5$\,s\\
     Problems solved by our algorithm in milliseconds require \textbf{over an hour} for MibS.
   \end{alertblock}
 \end{frame}
@@ -586,10 +635,10 @@
       \textbf{Contributions:}
       \begin{enumerate}
         \item Formal bilevel knapsack-scheduling model
-        \item Ceiling bound with precomputed $O(1)$ DP
+        \item Ceiling bound with precomputed $O(1)$ DP, solvable in $O(n\cdot B)$
         \item Max-LPT solved optimally in $O(n\cdot B)$
         \item $\tfrac34$-approximation guarantee (theory)
-        \item Early optimality detection ($84\%$ solve at root)
+        \item Early optimality detection ($84.6\%$ solve at root)
         \item Comprehensive computational study
       \end{enumerate}
       \smallskip
@@ -600,7 +649,6 @@
         \small
         \begin{itemize}
           \item No characterisation of easy instances
-          \item Exponential worst-case for $>30$ types
           \item Identical machines only
         \end{itemize}
       \end{alertblock}
@@ -652,6 +700,9 @@
       \textit{EURO J.\ Comput.\ Optim.}, 9:100007, 2021.
     \bibitem{dempe2020}
       S.\,Dempe, A.\,Zemkoho. \textit{Bilevel Optimization}, vol.\,161. Springer, 2020.
+    \bibitem{gurobi2024}
+      Gurobi Optimization, LLC. \textit{Gurobi Optimizer Reference Manual}. Version 12.0, 2024.
+      \url{https://www.gurobi.com}
   \end{thebibliography}
 \end{frame}
 
