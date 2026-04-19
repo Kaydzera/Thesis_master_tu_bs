@@ -1,0 +1,690 @@
+% ===================================================================================
+% Präsentation: Eine Branch-and-Bound-Methode für zweistufige parallele
+%               Maschinenplanung mit adversarieller Auftragsauswahl
+% Autor: Ole Damke, TU Braunschweig, April 2026
+%
+% Kompilieren:  $env:TEXINPUTS="./tex//;"; xelatex -interaction=nonstopmode deutsche_praesentation.tex
+% ===================================================================================
+% !TEX program = xelatex-nobiber
+
+\documentclass[fleqn,11pt,aspectratio=43]{beamer}
+\usepackage[ngerman]{babel}
+\usetheme[blue,dark,colorblocks]{tubs}
+
+% --- Schriftarten ---
+\usepackage{fontspec}
+\setmainfont{NexusSerifPro}[
+  Path=./fonts/otf/, Extension=.otf,
+  UprightFont=*-Regular, BoldFont=*-Bold]
+\setsansfont{NexusSansPro}[
+  Path=./fonts/otf/, Extension=.otf,
+  UprightFont=*-Regular, BoldFont=*-Bold]
+
+% --- Pakete ---
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{amsmath,amssymb}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{trees,positioning,arrows.meta}
+
+% --- Mathematische Makros ---
+\newcommand{\Cmax}{C_{\max}}
+\newcommand{\Copt}{C_{\max}^{*}}
+\newcommand{\Clpt}{C_{\max}^{\mathrm{LPT}}}
+\newcommand{\Cinc}{C_{\max}^{\mathrm{ink}}}
+\newcommand{\Brem}{B_{\mathrm{rest}}}
+\newcommand{\UB}{\mathrm{UB}}
+
+% --- Titelmetadaten (Kurztitel verhindert Überlauf in der Fußzeile) ---
+\title[B\&B for Bilevel Parallel Machine Scheduling]{%
+  A Branch-and-Bound Method for Bilevel\\
+  Parallel Machine Scheduling with\\
+  Adversarial Job Selection}
+\subtitle{Master Thesis Presentation}
+\author{Ole Damke}
+\institute{Institut für Mathematische Optimierung\\
+  Technische Universität Braunschweig}
+\date{April 2026}
+\titlegraphic[scaled]{\includegraphics{tex/logos/titlepicture.jpg}}
+
+% ===================================================================================
+\begin{document}
+% ===================================================================================
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\begin{frame}{Gliederung}
+  \tableofcontents
+\end{frame}
+
+% ===================================================================================
+\section{Motivation \& Problem}
+% ===================================================================================
+
+\begin{frame}[shrink=5]{Motivation}
+  \begin{columns}[T]
+    \begin{column}{0.57\textwidth}
+      \textbf{Szenario: Produktionsbetrieb}
+      \begin{itemize}
+        \item Manager entscheidet, \emph{welche Aufträge angenommen werden} (Budgetbeschränkung)
+        \item Planer weist Aufträge Maschinen zu — \emph{minimiert} die Fertigstellungszeit
+        \item Manager benötigt eine Worst-Case-Garantie für den Makespan
+      \end{itemize}
+      Dies ist ein \textbf{zweistufiges Optimierungsproblem}:
+      \begin{itemize}
+        \item \textbf{Leader} (Manager): wählt Aufträge zur \emph{Maximierung} des Makespans
+        \item \textbf{Follower} (Planer): \emph{minimiert} den Makespan
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.40\textwidth}
+      \begin{block}{Unser Problem}
+        \textbf{Obere Ebene (Leader)}\\
+        Unbeschränktes Knapsack-Problem\\[0.25em]
+        \centering$\downarrow$ Auftragsportfolio\\[0.25em]
+        \raggedright\textbf{Untere Ebene (Follower)}\\
+        Paralleles Maschinenplanungsproblem\\
+        ($P\,||\Cmax$)
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=5]{Zweistufige Optimierung: Definition}
+  \begin{block}{Zweistufiges Optimierungsproblem}
+    \vspace{-0.3em}
+    \begin{align*}
+      \max_{x}\quad & F\bigl(x,\,y^*(x)\bigr) & &x\in X\\
+      \text{wobei}\quad & y^*(x)\in\arg\min_{y}\,\{f(x,y):y\in Y(x)\}
+    \end{align*}
+    \vspace{-0.4em}
+  \end{block}
+  \begin{itemize}
+    \item \textbf{Leader} wählt $x$ unter \emph{Antizipation} der optimalen Reaktion des Followers
+    \item \textbf{Follower} beobachtet $x$ und minimiert sein eigenes Ziel
+    \item \textbf{Optimistisch}: bei Indifferenz des Followers wird das für den Leader günstigste Ergebnis gewählt
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[shrink=22]{Zweistufige Optimierung: Schwierigkeit}
+  \begin{alertblock}{Rechenkomplexität}
+    Zweistufige Optimierung ist im Allgemeinen NP-schwer [Frangioni~1995].
+  \end{alertblock}
+  \begin{block}{Unsere spezifische Herausforderung}
+    \begin{itemize}
+      \item \textbf{Leader} löst ein unbeschränktes Knapsack-Problem (NP-schwer)
+      \item \textbf{Follower} löst paralleles Maschinenplanungsproblem $P||\Cmax$ (NP-schwer)
+      \item Wertfunktion $\Copt(x)$ ist \emph{nicht-konvex} und \emph{unstetig}
+      Kein geschlossener Ausdruck für $\Copt(x)$: jede Auswertung erfordert das Lösen des Follower-Problems, was kombinatorische Verfahren (z.\,B.\ Branch-and-Bound) auf der oberen Ebene notwendig macht
+    \end{itemize}
+  \end{block}
+  \begin{block}{Konsequenz}
+    Allgemeine zweistufige Löser (z.\,B.\ MibS) können nur sehr kleine Instanzen verarbeiten.
+    Wir benötigen einen \textbf{problemspezifischen exakten Algorithmus}.
+  \end{block}
+\end{frame}
+
+\begin{frame}[shrink=36]{Das Knapsack-Scheduling-Problem}
+  \textbf{Problemdaten:}
+  \begin{itemize}
+    \item $n$ Auftragstypen, $m$ identische Parallelmaschinen, Budget $B>0$
+    \item Auftragstyp $i$: Bearbeitungszeit $d_i>0$, Kosten $p_i>0$; oBdA $d_1\geq\cdots\geq d_n$
+    \item \textbf{Leader} wählt $x_i\in\mathbb{Z}_+$ Kopien von Typ $i$;
+          \textbf{Follower} weist $y_{ik}\in\mathbb{Z}_+$ Aufträge von Typ $i$ Maschine $k$ zu
+  \end{itemize}
+  \begin{block}{Vollständige zweistufige Formulierung}
+    \vspace{-0.2em}
+    \begin{align*}
+      \max_{x\in\mathbb{Z}_+^n}\quad & \Copt(x)\\
+      \text{s.t.}\quad & \textstyle\sum_{i=1}^{n}p_ix_i\leq B\\[0.4em]
+      \text{wobei}\quad\Copt(x)\;=\;& \min_{y_{ik}\in\mathbb{Z}_+}\;\max_{k=1,\ldots,m}\;\sum_{i=1}^{n}d_i y_{ik}\\
+      \text{s.t.}\quad & \textstyle\sum_{k=1}^{m}y_{ik}=x_i\quad\forall\,i \in\{1,\ldots,n\}
+    \end{align*}
+    \vspace{-0.3em}
+  \end{block}
+  \smallskip
+  Leader \textbf{maximiert} $\Copt(x)$; Follower \textbf{minimiert} es — eine adversarielle zweistufige Struktur.
+\end{frame}
+
+\begin{frame}{Warum Enumeration Scheitert}
+  Naiver Ansatz: alle zulässigen $x$ aufzählen und für jedes das Follower-Problem lösen.
+  \[
+    \text{Suchraum} \leq \prod_{i=1}^{n}\!\left(\!\left\lfloor\tfrac{B}{p_i}\right\rfloor+1\right)
+  \]
+  \begin{block}{Beispiel: $n=10$, $B=100$, $p_i=5{+}i$}
+    Obere Schranke: $\mathbf{5{,}29\times 10^{10}}$ Kandidaten\\[0.2em]
+    Bei 1\,ms pro Follower-Lösung: $\approx\mathbf{1{,}68\text{ Jahre}}$
+  \end{block}
+  \bigskip
+  \textbf{Lösung:} Branch-and-Bound mit engen oberen Schranken zur aggressiven Baumbereinigung.
+\end{frame}
+
+\begin{frame}{Suchbaumstruktur}
+  \begin{center}
+  \begin{tikzpicture}[scale=1.0,
+      nd/.style={draw,rectangle,rounded corners=3pt,
+        font=\small,align=center,minimum width=2.0cm,minimum height=0.8cm},>=stealth]
+    \node[nd](r)  at (0,4.2)    {\textbf{Wurzel}\\$d=0$};
+    \node[nd](n1) at (-3.2,2.6) {$x_1=0$};
+    \node[nd](n2) at (0,2.6)    {$x_1=1$};
+    \node[nd](n3) at (3.2,2.6)  {$x_1=2$};
+    \node[nd](l1) at (-4.2,0.8) {$x_2=0$};
+    \node[nd](l2) at (-2.1,0.8) {$x_2=1$};
+    \node[nd](l3) at (0,0.8)    {$x_2=0$};
+    \node[nd](l4) at (3.2,0.8)  {$x_2=0$};
+    \draw[->](r)--(n1);\draw[->](r)--(n2);\draw[->](r)--(n3);
+    \draw[->](n1)--(l1);\draw[->](n1)--(l2);
+    \draw[->](n2)--(l3);\draw[->](n3)--(l4);
+    \node[font=\footnotesize,gray] at (0,-0.2)
+      {Beispiel: $n=2$ Typen, $p_1=5$, $p_2=8$, $B=10$};
+  \end{tikzpicture}
+  \end{center}
+  \smallskip
+  Jedes \textbf{Blatt} erfordert eine Follower-Lösung (Scheduling).
+  Bei großem $n$ und $B$ hat der Baum Milliarden von Blättern $\Rightarrow$ nicht handhabbar.
+\end{frame}
+
+% ===================================================================================
+\section{Branch-and-Bound-Algorithmus}
+% ===================================================================================
+
+\begin{frame}[shrink=8]{Branch-and-Bound: Überblick}
+  \begin{block}{Knotenstruktur auf Tiefe $d$}
+    \begin{itemize}
+      \item \textbf{Fixierte Entscheidungen:} $x_1,\ldots,x_d$\quad
+            $\Brem = B - \sum_{i=1}^{d}p_ix_i$
+      \item \textbf{Maschinenlasten:} inkrementeller LPT-Plan für Elemente $1,\ldots,d$
+      \item \textbf{Kinder:} $x_{d+1}=0,1,\ldots,\lfloor\Brem/p_{d+1}\rfloor$
+    \end{itemize}
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{0.47\textwidth}
+      \textbf{Drei Komponenten:}
+      \begin{enumerate}
+        \item \textbf{Branching} — fixiere $x_{d}$
+        \item \textbf{Bounding} — berechne $\UB(d,\Brem)$
+        \item \textbf{Pruning} — verwerfe wenn $\UB\leq\Cinc$
+      \end{enumerate}
+    \end{column}
+    \begin{column}{0.50\textwidth}
+      \textbf{Designentscheidungen:}
+      \begin{itemize}
+        \item Tiefensuche $\to$ schnelle Kandidatenaktualisierung $\to$ aggressives Beschneiden
+        \item Inkrementelles LPT: $O(m)$ pro Knoten
+        \item DP vorberechnet: $O(1)$ Schrankenabfragen
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=18]{Die LPT-Regel — Heuristik des Followers}
+  \begin{columns}[T]
+    \begin{column}{0.53\textwidth}
+      \textbf{Longest Processing Time (LPT)} [Graham~1969]:
+      \begin{itemize}
+        \item Aufträge nach nicht-aufsteigender Dauer sortieren
+        \item Jeden Auftrag der \emph{am wenigsten belasteten} Maschine zuweisen
+      \end{itemize}
+      \textbf{Garantie:}\quad $\Copt(x)\leq\Clpt(x)\leq\tfrac{4}{3}\Copt(x)$
+      \begin{alertblock}{Inkrementelle Aktualisierungen}
+        Verzweigung $d\to d{+}1$: $x_{d+1}$ Aufträge der Dauer $d_{d+1}$ anhängen.
+        Bestehenden sortierten Maschinenbelastungszustand wiederverwenden — \textbf{keine vollständige Neuberechnung}
+      \end{alertblock}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{block}{LPT-Algorithmus}
+        \footnotesize
+        $L_1=\cdots=L_m\leftarrow 0$\\[0.15em]
+        \textbf{für} jeden Auftrag $j$ (nicht-aufsteigende Reihenfolge):\\
+        \quad $k^*\leftarrow\arg\min_k L_k$\\
+        \quad $L_{k^*}\leftarrow L_{k^*}+d_j$\\[0.15em]
+        \textbf{return} $\Clpt=\max_k L_k$\\[0.2em]
+        \normalsize Zeit: $O(J\log m)$
+      \end{block}
+      \textbf{Praxis:} LPT ist in $\approx84\%$ unserer Testinstanzen \emph{optimal}.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=10]{Beschneiden durch Obere Schranken}
+  Auf Tiefe $d$ mit Budget $\Brem$ berechnen wir eine \emph{obere Schranke}:
+  \[\Copt(x_1,\ldots,x_n)\;\leq\;\UB(x_1,\ldots,x_d,\Brem)
+    \quad\forall\;x_{d+1},\ldots,x_n\text{ (Ergänzungen)}\]
+  \textbf{Beschneiden} wenn $\;\UB\leq\Cinc$.
+  \[
+    \UB = \underbrace{C_{\max}^{\mathrm{LPT},(d)}}_{\text{fixiert, 1..}d}
+         +\;\max_{\sum_{i>d}p_iy_i\leq\Brem}
+           \underbrace{\Delta(y_{d+1},\ldots,y_n)}_{\text{Mehraufwand Restelemente}}
+  \]
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Ceiling-Schranke}
+        $\Delta = \sum_{i>d}d_i\lceil y_i/m\rceil$\\
+        Einzelne DP-Tabelle, $O(1)$ Abfrage
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{Max-LPT-Schranke}
+        $\Delta = \Clpt(y_{d+1},\ldots,y_n)$\\
+        DP-Tabelle pro Tiefe, engere Schranke
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===================================================================================
+\section{Die Ceiling-Schranke}
+% ===================================================================================
+
+\begin{frame}[shrink=15]{Ceiling-Schranke: Formulierung}
+  \begin{block}{Knapsack-Scheduling-Relaxierung}
+    \vspace{-0.3em}
+    \[\UB = C_{\max}^{\mathrm{LPT},(d)}
+      \;+\;
+      \max_{y\geq 0}\;\sum_{i=d+1}^{n}d_i\!\left\lceil\frac{y_i}{m}\right\rceil
+      \quad\text{s.t.}\;\sum_{i>d}p_iy_i\leq\Brem\]
+    \vspace{-0.3em}
+  \end{block}
+  \textbf{Intuition:} $\lceil y_i/m\rceil$ Aufträge vom Typ $i$ auf $m$ gleichwertigen Maschinen erhöhen den Makespan um
+  $\lceil y_i/m\rceil\cdot d_i$ — stets eine \emph{Überschätzung}.
+  \begin{block}{DP-Implementierung — $O(1)$ Abfrage pro Knoten}
+    \small Reduktion auf unbeschränktes Knapsack-Problem. Für Elementtyp $i$:
+    \begin{itemize}\small
+      \item \textbf{Einzel:} Kosten $p_i$, Wert $d_i$ (für $1,\ldots,m{-}1$ Kopien)
+      \item \textbf{Block:} Kosten $m\cdot p_i$, Wert $d_i$ (für eine Charge von $m$)
+    \end{itemize}
+    Vorberechnung in umgekehrter Elementreihenfolge $\Rightarrow$ jede Tiefe-$d$-Abfrage ist ein direkter Tabellenlesezugriff.
+  \end{block}
+\end{frame}
+
+\begin{frame}[shrink=18]{Ceiling-Schranke: Korrektheitsbeweis}
+  \begin{block}{Satz}
+    Für jede zulässige Vervollständigung gilt: $\Copt(x_1,\ldots,x_n)\leq\UB$
+  \end{block}
+  \textbf{Beweisschema:}
+  \begin{enumerate}
+    \item $\Copt(x)\leq\Clpt(x)$ (LPT überschätzt)
+    \item Nach fixierten Elementen ist der aktuelle Makespan $= C_{\max}^{\mathrm{LPT},(d)}$
+    \item \emph{Annahme:} alle Maschinen bis $C_{\max}^{\mathrm{LPT},(d)}$ gefüllt — nur Überschätzung
+    \item Auf $m$ gleichmäßig belasteten Maschinen erhöht das Hinzufügen von $y_i$ Aufträgen vom Typ $i$ den Makespan um
+          $\lceil y_i/m\rceil\cdot d_i$
+    \item Daher $\Clpt(x)\leq C_{\max}^{\mathrm{LPT},(d)}+\sum_{i>d}\lceil x_i/m\rceil\cdot d_i$
+    \item Maximierung der rechten Seite über $\Brem$ ergibt $\UB\geq\Copt(x)$ \hfill$\square$
+  \end{enumerate}
+\end{frame}
+
+% ===================================================================================
+\section{Die Max-LPT-Schranke}
+% ===================================================================================
+
+\begin{frame}[shrink=8]{Das Max-LPT-Problem}
+  \begin{block}{Definition}
+    Finde $x\in\mathbb{Z}_+^n$ mit $\sum_i p_ix_i\leq B$, das $\Clpt(x)$ \textbf{maximiert}.
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{0.54\textwidth}
+      \textbf{Zwei Rollen:}
+      \begin{enumerate}
+        \item Einmalig gelöst $\Rightarrow$ \textbf{starker anfänglicher Kandidat} (mit $\tfrac34$-Approximationsgarantie)
+        \item Für Restelemente an jedem Knoten gelöst $\Rightarrow$ \textbf{engere Schranke} als Ceiling
+      \end{enumerate}
+      Berücksichtigt die tatsächliche LPT-Struktur (nicht nur $\lceil\cdot/m\rceil$).
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \begin{alertblock}{Hauptergebnis}
+        Max-LPT \textbf{optimal} in $O(n\cdot B)$ per DP gelöst.
+      \end{alertblock}
+      \begin{block}{Kompromiss}
+        \small $n$ tiefenspezifische DP-Tabellen vs.\ eine Ceiling-Tabelle; amortisiert durch besseres Beschneiden.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=15]{Approximationsgarantie: Bausteine}
+  \begin{block}{Lemma (Eigenschaften der $\alpha$-Approximation)}
+    \vspace{-0.2em}
+    \small Sei \texttt{approx} eine $\alpha$-Approximation für Minimierung ($\alpha\geq 1$), setze $\beta:=1/\alpha$. Dann gilt für alle $x$:
+    \[\beta\cdot\mathrm{Opt}(x)\;\leq\;\beta\cdot\mathrm{approx}(x)\;\leq\;\mathrm{Opt}(x)\;\leq\;\mathrm{approx}(x)\]
+    \vspace{-0.3em}
+  \end{block}
+  \begin{block}{Satz (Zweistufige Approx.\ [Weninger \& Fukasawa 2025])}
+    \vspace{-0.2em}
+    \small Wenn $\beta\cdot\mathrm{Opt}(x)\leq\beta\cdot\mathrm{approx}(x)\leq\mathrm{Opt}(x)\leq\mathrm{approx}(x)$ für alle $x$ und $\hat x\in\arg\max_x\,\mathrm{approx}(x)$, dann:
+    \[\beta\cdot\mathrm{Opt}_{\text{zweistufig}}\;\leq\;\mathrm{Opt}(\hat x)\;\leq\;\mathrm{Opt}_{\text{zweistufig}}\]
+    \vspace{-0.3em}
+  \end{block}
+  \textbf{Unser Setting:} LPT ist eine $\tfrac{4}{3}$-Approximation für $P||\Cmax$ $\Rightarrow$ $\beta=\tfrac{3}{4}$. Max-LPT maximiert $\Clpt$ $\Rightarrow$ Satz direkt anwenden.
+\end{frame}
+
+\begin{frame}[shrink=14]{Die $\frac{3}{4}$-Approximationsgarantie}
+  \begin{block}{Satz}
+    Sei $\hat x$ die Max-LPT-Lösung und $x^*$ die zweistufig-optimale Lösung. Dann gilt:
+    \[\tfrac{3}{4}\,\Copt(x^*)\;\leq\;\Copt(\hat x)\;\leq\;\Copt(x^*)\]
+  \end{block}
+  \textbf{Beweis} (unter Verwendung der zwei Bausteine):
+  \begin{enumerate}\small
+    \item \textbf{Lemma} ($\alpha=\tfrac{4}{3}$, $\beta=\tfrac{3}{4}$): für alle $x$,\quad $\tfrac34\,\Copt(x)\leq\tfrac34\,\Clpt(x)\leq\Copt(x)\leq\Clpt(x)$
+    \item $\hat x$ maximiert $\Clpt$, also $\;\Clpt(x^*)\leq\Clpt(\hat x)$
+    \item \textbf{Satz [WF25]:}\quad $\tfrac{3}{4}\cdot\mathrm{Opt}_{\text{zweistufig}}\leq\Copt(\hat x)\leq\mathrm{Opt}_{\text{zweistufig}}$
+    \item \textbf{Vollständige Kette:}\quad $\tfrac34\,\Copt(x^*)\leq\tfrac34\,\Clpt(x^*)\leq\tfrac34\,\Clpt(\hat x)\leq\Copt(\hat x)\leq\Copt(x^*)$ \hfill$\square$
+  \end{enumerate}
+  \begin{alertblock}{Praktische Bedeutung}
+    Der Max-LPT-Kandidat ist \textbf{garantiert $\leq 25\%$ suboptimal}.
+    In der Praxis ist die Lücke praktisch immer null (LPT ist oft optimal).
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}[shrink=45]{Max-LPT-Algorithmus: Budget pro Maschine \& Eigenschaften}
+  \begin{block}{Strukturelle Beobachtung}
+    In jedem LPT-Plan wurde der \textbf{zuletzt geplante Auftrag} $I$ auf die \textbf{am wenigsten belastete Maschine} zum Planungszeitpunkt gelegt:
+    \[\Clpt = C_{\max}^{(m)} + d_I\]
+    Der Makespan wird durch die \emph{minimale Maschinenlast} unmittelbar vor $I$ plus seiner Dauer $d_I$ bestimmt.
+  \end{block}
+  Für einen festen Kandidaten-Letzten-Auftrag $J$ wollen wir $C_{\max}^{(m)}$ für Elemente $1,\ldots,J$ maximieren.
+  \begin{block}{Zwei Haupteigenschaften des optimalen vorhergehenden Plans}
+    \begin{itemize}
+      \item \textbf{Eigenschaft 1} (höchstes Budget pro Maschine):\\
+            $B^* := \lfloor B/m \rfloor$ ist das größte Budget, das gleichmäßig jeder Maschine zugewiesen werden kann.\\
+            Keine Umverteilung kann der am wenigsten belasteten Maschine mehr als $B^*$ geben.
+      \item \textbf{Eigenschaft 2} (beste Elemente für $B^*$):\\
+            Für Budget $B^*$ ist die optimale Elementkombination aus Typen $\leq J$ das Optimum des unbeschränkten Knapsack-Problems.
+    \end{itemize}
+    Wenn beide gelten, erzielt kein Plan ein größeres $C_{\max}^{(m)}$: kaufe $m$ Kopien jedes DP-optimalen Elements und führe LPT aus.
+  \end{block}
+  \begin{block}{Budgetanpassung wenn $\hat{B} := B - mB^* < p_J$}
+    \small Rest $\hat{B}$ ist zu klein, um eine Kopie von $J$ zu bezahlen.
+    Reduziere $B^*$ um 1 (gleichmäßig über Maschinen) bis $\hat{B} \geq p_J$.
+    Eigenschaft 1 gilt für das reduzierte $B^*$; frage $\mathrm{DP}(J,B^*)$ erneut ab.
+    Wenn $B^*$ vor $\hat{B} \geq p_J$ null erreicht, überspringe $J$ (unzulässig).
+  \end{block}
+\end{frame}
+
+\begin{frame}[shrink=45]{Max-LPT-Algorithmus: Korrektheit \& Komplexität}
+  \begin{block}{Algorithmus (Pseudocode)}
+    \small
+    DP-Tabelle vorberechnen (unbeschränktes Knapsack-Problem, Elemente $1\ldots n$, Budgets $0\ldots B$).\\[0.2em]
+    $z^*\leftarrow 0$\hfill\emph{// bisher bester Kandidat}\\
+    \textbf{für} jeden Typ $J\in\{1,\ldots,n\}$:\\
+    \qquad $B^*\leftarrow\lfloor B/m\rfloor$\\
+    \qquad \textbf{solange} $(B-mB^*)<p_J$ \textbf{und} $B^*>0$:\; $B^*\leftarrow B^*-1$\\
+    \qquad \textbf{wenn} $(B-mB^*)<p_J$: $J$ überspringen\hfill\emph{// unzulässig}\\
+    \qquad $z_J\leftarrow\mathrm{DP}(J,B^*)+d_J$;\; $z^*\leftarrow\max(z^*,z_J)$\\
+    \textbf{return} $z^*$
+  \end{block}
+  \begin{columns}[T]
+    \begin{column}{0.53\textwidth}
+      \begin{block}{Korrektheit}
+        \small
+        Jede optimale Lösung hat einen letzten Auftrag $I$ (Fall 1 oder 2).\\[0.2em]
+        Für dieses $I$ identifizieren Eigenschaften 1 \& 2 den optimalen vorhergehenden Plan via $\mathrm{DP}(I,B^*)$.\\[0.2em]
+        $\max_J z_J$ über alle Kandidaten deckt das Optimum ab.\hfill$\square$
+      \end{block}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{alertblock}{Komplexität: $O(n\cdot B)$}
+        \small
+        DP-Tabelle in $O(n\cdot B)$ vorberechnet.\\[0.2em]
+        Pro Kandidat $J$: $O(1)$ Abfrage + $O(B^*/m)$ Anpassung.\\[0.2em]
+        $n$ Kandidaten $\Rightarrow O(n\cdot B)$ gesamt.
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===================================================================================
+\section{Frühzeitige Optimalitätserkennung}
+% ===================================================================================
+
+\begin{frame}[shrink=5]{Frühzeitige Optimalitätserkennung}
+  \begin{block}{Schlüsselungleichung}
+    Für alle $x$: $\Copt(x)\leq\Clpt(x)$ (LPT überschätzt nur)
+  \end{block}
+  Sei $\hat x\in\arg\max_x\Clpt(x)$. Wenn $\Clpt(\hat x)=\Copt(\hat x)$, dann gilt für \emph{alle} zulässigen $x$:
+  \[\Copt(\hat x)=\Clpt(\hat x)\geq\Clpt(x)\geq\Copt(x)\]
+  $\Rightarrow$ $\hat x$ ist das \textbf{globale zweistufige Optimum} — kein B\&B-Baum erforderlich!
+  \begin{alertblock}{Auswirkung}
+    \begin{itemize}
+      \item $\Copt(\hat x)$ wird ohnehin berechnet, um den Kandidaten zu initialisieren
+      \item Diese Überprüfung kostet \textbf{nichts extra}
+      \item In $\approx\mathbf{84{,}6\%}$ unserer Testinstanzen ausgelöst $\Rightarrow$ an der Wurzel gelöst
+    \end{itemize}
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}[shrink=5]{Vollständiger Algorithmus}
+  \begin{columns}[T]
+    \begin{column}{0.53\textwidth}
+      \small
+      \begin{enumerate}
+        \item Max-LPT lösen $\to\hat x$;\quad $\Clpt(\hat x)$, $\Copt(\hat x)$ berechnen
+        \item \textbf{Wenn} $\Clpt(\hat x)=\Copt(\hat x)$: \textbf{return} $\hat x$
+        \item $\Cinc\leftarrow\Copt(\hat x)$;\quad Wurzel in Stapel $Q$ legen
+        \item \textbf{Solange} $Q\neq\emptyset$:
+        \begin{itemize}\small
+          \item Knoten $(d,x_1,\ldots,x_d,\Brem)$ entnehmen
+          \item Wenn $d=n$: Follower-Problem lösen; $\Cinc$ aktualisieren
+          \item Sonst: $\UB(d,\Brem)$ berechnen
+          \item Wenn $\UB\leq\Cinc$: \textbf{beschneiden}
+          \item Sonst: Kinder einschieben (Tiefensuche)
+        \end{itemize}
+        \item \textbf{return} incumbent
+      \end{enumerate}
+      \smallskip
+      {\footnotesize Inspiriert durch [Weninger \& Fukasawa 2025].}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{block}{Blattoptimierung}
+        \small Auf Tiefe $n{-}1$: nur das Kind, das das \emph{maximale} verbleibende Budget ausgibt, ist relevant.
+        Alle anderen erzeugen ein kleineres oder gleiches $\Copt$.
+      \end{block}
+      \begin{block}{Follower-Löser}
+        \small Gurobi 12.0.3 [Gurobi Optimization 2024] löst die MIP-Formulierung von $P||\Cmax$ an Blättern.
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ===================================================================================
+\section{Numerische Experimente}
+% ===================================================================================
+
+\begin{frame}[shrink=5]{Versuchsaufbau}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \textbf{Hard- \& Software:}
+      \begin{itemize}
+        \item AMD Ryzen 5 9600X, 32\,GB RAM
+        \item Python 3.11, Gurobi 12.0.3
+        \item Einzelthreadige Läufe
+      \end{itemize}
+      \textbf{PatternTestSet:} 140 Instanzen\\
+      7 strukturelle Muster:\\
+      \footnotesize Uniform Ratios, High Variance, Increasing, Moderately Random,
+      Extreme, Strong Correlation, Subset Sum\\
+      \normalsize 6--12 Typen, 3--8 Maschinen, Budget 15--50
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \begin{block}{Korrektheit: vs.\ Enumeration}
+        \begin{itemize}
+          \item 140 Instanzen: \textbf{0 Abweichungen}
+          \item Enumeration bei 15/140 Zeitlimit überschritten
+          \item B\&B löste alle 140 in ms
+        \end{itemize}
+      \end{block}
+      \begin{alertblock}{Beschleunigung}
+        Bis zu $\mathbf{10^6\times}$ schneller\\als vollständige Enumeration
+      \end{alertblock}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=8]{Gitternetz-Sensitivitätsanalyse}
+  \textbf{Gitter:} $6{\times}6$ (Typen $\times$ Maschinen), 3 Budgetmultiplikatoren, 5 Seeds $=540$ Instanzen; 1\,h Limit.\\[0.15em]
+  \footnotesize\textbf{Typen:} 4, 8, 12, 16, 20, 24\quad\textbullet\quad\textbf{Maschinen:} 2, 4, 6, 8, 10, 12\quad\textbullet\quad\textbf{Multiplikatoren:} 1,3;\;2,5;\;5,0\normalsize
+
+  \begin{center}\small
+  \begin{tabular}{lrrrr}
+    \toprule
+    Budget $\times$ & Wurzel opt. & Fertiggest. & Zeitüberschr. & Blatt Zeitü.\\
+    \midrule
+    $1{,}3\times$ & 154\,/\,154 & 22\,/\,26 & 2\,/\,0 & 2\,/\,0\\
+    $2{,}5\times$ & 150\,/\,150 & 19\,/\,22 & 3\,/\,0 & 8\,/\,8\\
+    $5{,}0\times$ & 153\,/\,153 & 20\,/\,23 & 4\,/\,1 & 3\,/\,3\\
+    \bottomrule
+  \end{tabular}\\[0.2em]
+  \footnotesize Ceiling\,/\,MaxLPT
+  \end{center}
+
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{alertblock}{Hauptergebnis}
+        $\mathbf{84{,}6\%}$ der Instanzen an der Wurzel gelöst — kein B\&B-Baum erforderlich
+      \end{alertblock}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{MaxLPT-Vorteil}
+        Mehr Fertigstellungen und weniger Zeitüberschreitungen in jeder Konfiguration
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=5]{Ceiling vs.\ MaxLPT: Schwierige Instanzen}
+  61 nicht-wurzeloptimale Instanzen, bei denen beide Schranken innerhalb von 1\,h fertiggestellt wurden:
+  \begin{columns}[T]
+    \begin{column}{0.49\textwidth}
+      \textbf{Laufzeit (Ceiling $-$ MaxLPT):}
+      \begin{itemize}
+        \item Mittelwert: $+71$\,s (Ceiling langsamer)
+        \item Median: $+0{,}4$\,s
+        \item Max: $+1{.}057$\,s
+        \item MaxLPT schneller: \textbf{41 von 61 Fällen}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \textbf{Knoten (Ceiling $-$ MaxLPT):}
+      \begin{itemize}
+        \item Mittelwert: $+4{,}8$\,Mio.\ Knoten
+        \item Median: $+69$\,K
+        \item Max: $+54{,}5$\,Mio.
+        \item MaxLPT immer weniger Knoten
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \begin{block}{Interpretation}
+    \small MaxLPT beschneidet aggressiver bei schwierigen Instanzen.
+    Die Vorberechnung von $n$ DP-Tabellen ist durch die reduzierte Knotenanzahl vollständig gerechtfertigt.
+    Ceiling ist marginal schneller bei trivialen (wurzeloptimalen) Fällen.
+  \end{block}
+\end{frame}
+
+\begin{frame}[shrink=12]{Vergleich mit MibS}
+  \textbf{MibS}: allgemeiner zweistufiger MILP-Löser [Tahernejad et al.\ 2020]\\
+  \textbf{Teilmenge:} $m\in\{4,8,12\}$, $j\in\{4,8,16,20\}$, 3 Multiplikatoren, 5 Seeds $=180$ Instanzen
+
+  \begin{center}\small
+  \begin{tabular}{crrrr}
+    \toprule
+    $m\;\backslash\; j$ & 4 & 8 & 16 & 20\\
+    \midrule
+    4  & 15/15 & 8/15 & 2/15 & 1/15\\
+    8  & 5/15  & 0/15 & 0/15 & 1/15\\
+    12 & 2/15  & 0/15 & 0/15 & 0/15\\
+    \bottomrule
+  \end{tabular}\\[0.2em]
+  {\footnotesize MibS-Fertigstellungen (von 15) pro Zelle. MaxLPT B\&B: \textbf{179/180}.}
+  \end{center}
+
+  \begin{alertblock}{Beschleunigung gegenüber MibS (1\,h Limit)}
+    \small Ceiling: Mittelwert $+2{.}876{,}6$\,s, Median $+3{.}599{,}9$\,s\quad
+    MaxLPT: Mittelwert $+2{.}959{,}6$\,s, Median $+3{.}599{,}5$\,s\\
+    Probleme, die unser Algorithmus in Millisekunden löst, benötigen bei MibS \textbf{über eine Stunde}.
+  \end{alertblock}
+\end{frame}
+
+% ===================================================================================
+\section{Fazit}
+% ===================================================================================
+
+\begin{frame}[shrink=5]{Zusammenfassung \& Schlussfolgerungen}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \textbf{Beiträge:}
+      \begin{enumerate}
+        \item Formales zweistufiges Rucksack-Scheduling-Modell
+        \item Ceiling-Schranke mit vorberechnetem $O(1)$ DP, lösbar in $O(n\cdot B)$
+        \item Max-LPT optimal in $O(n\cdot B)$ gelöst
+        \item $\tfrac34$-Approximationsgarantie (Theorie)
+        \item Frühzeitige Optimalitätserkennung ($84{,}6\%$ an Wurzel gelöst)
+        \item Umfassende numerische Studie
+      \end{enumerate}
+      \smallskip
+      Übertrifft MibS um \textbf{Größenordnungen}.
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \begin{alertblock}{Einschränkungen}
+        \small
+        \begin{itemize}
+          \item Keine Charakterisierung einfacher Instanzen
+          \item Nur identische Maschinen
+        \end{itemize}
+      \end{alertblock}
+      \begin{block}{Zukünftige Arbeit}
+        \small
+        \begin{itemize}
+          \item Verwandte/unverwandte Maschinen
+          \item Stochastische Bearbeitungszeiten
+          \item Wurzeloptimale Instanzen charakterisieren
+        \end{itemize}
+      \end{block}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[plain]
+  \begin{center}
+    \vspace{3em}
+    {\huge\bfseries Vielen Dank!}\\[0.8em]
+    {\Large Fragen?}\\[1.6em]
+    \rule{8cm}{0.4pt}\\[0.4em]
+    {\small Ole Damke \;\textbullet\; \texttt{o.damke@tu-braunschweig.de}\\[0.2em]
+           Institut für Mathematische Optimierung \;\textbullet\; TU Braunschweig}
+  \end{center}
+\end{frame}
+
+% ===================================================================================
+\appendix
+
+\begin{frame}[allowframebreaks]{Literatur}
+  \footnotesize
+  \begin{thebibliography}{9}
+    \bibitem{frangioni1995}
+      A.\,Frangioni. On a new class of bilevel programming problems and its use
+      for reformulating mixed integer problems.
+      \textit{Eur.~J.~Oper.~Res.}, 82(3):615--646, 1995.
+    \bibitem{graham1969}
+      R.\,L.\,Graham. Bounds on Multiprocessor Timing Anomalies.
+      \textit{SIAM J.\ Appl.\ Math.}, 17(2):416--429, 1969.
+    \bibitem{weninger2025}
+      N.\,Weninger, R.\,Fukasawa. A fast combinatorial algorithm for the bilevel knapsack problem.
+      \textit{Math.\ Program.}, 210(1):847--879, 2025.
+    \bibitem{tahernejad2020}
+      S.\,Tahernejad, T.\,K.\,Ralphs, S.\,T.\,DeNegre. A branch-and-cut algorithm for mixed
+      integer bilevel linear optimisation.
+      \textit{Math.\ Program.\ Comput.}, 12(4):529--568, 2020.
+    \bibitem{kleinert2021}
+      T.\,Kleinert et al. A survey on MIP techniques in bilevel optimisation.
+      \textit{EURO J.\ Comput.\ Optim.}, 9:100007, 2021.
+    \bibitem{dempe2020}
+      S.\,Dempe, A.\,Zemkoho. \textit{Bilevel Optimization}, vol.\,161. Springer, 2020.
+    \bibitem{gurobi2024}
+      Gurobi Optimization, LLC. \textit{Gurobi Optimizer Reference Manual}. Version 12.0, 2024.
+      \url{https://www.gurobi.com}
+  \end{thebibliography}
+\end{frame}
+
+\end{document}

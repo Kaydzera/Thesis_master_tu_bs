@@ -395,21 +395,20 @@
   \end{columns}
 \end{frame}
 
-\begin{frame}[shrink=8]{Approximation Guarantee: Building Blocks}
-
-
-
-  \begin{block}{Theorem}
-    Let $\hat x$ be the Max-LPT solution and $x^*$ the bilevel-optimal solution. Then:
-    \[\tfrac{3}{4}\,\Copt(x^*)\;\leq\;\Copt(\hat x)\;\leq\;\Copt(x^*)\]
-  \end{block}
-
-  \begin{block}{Theorem (Bilevel Approx.\ [Weninger \& Fukasawa 2025])}
+\begin{frame}[shrink=5]{Approximation Guarantee: Building Blocks}
+  \begin{block}{Lemma (Properties of $\alpha$-approximation)}
     \vspace{-0.2em}
-    \small For $\tfrac{3}{4} \leq 1$ and $\tfrac{3}{4}\,\Copt(x)\leq \tfrac{3}{4} \Clpt(x) \leq \Copt(x)\leq \Clpt(x)$ for all $x$, and $\hat x\in\arg\max_x\Clpt(x)$, then
-    \[\beta\cdot\mathrm{Opt}_{\text{bilevel}}\;\leq\;\Copt(\hat x)\;\leq\;\mathrm{Opt}_{\text{bilevel}}\]
+    \small Let \texttt{approx} be an $\alpha$-approx.\ for minimization ($\alpha\geq 1$), set $\beta:=1/\alpha$. Then for all $x$:
+    \[\beta\cdot\mathrm{Opt}(x)\;\leq\;\beta\cdot\mathrm{approx}(x)\;\leq\;\mathrm{Opt}(x)\;\leq\;\mathrm{approx}(x)\]
     \vspace{-0.3em}
   \end{block}
+  \begin{block}{Theorem (Bilevel Approx.\ [Weninger \& Fukasawa 2025])}
+    \vspace{-0.2em}
+    \small If $\beta\cdot\mathrm{Opt}(x)\leq\mathrm{approx}(x)\leq\mathrm{Opt}(x)\leq\mathrm{approx}(x)$ for all $x$ and $\hat x\in\arg\max_x\,\mathrm{approx}(x)$, then:
+    \[\beta\cdot\mathrm{Opt}_{\text{bilevel}}\;\leq\;\mathrm{Opt}(\hat x)\;\leq\;\mathrm{Opt}_{\text{bilevel}}\]
+    \vspace{-0.3em}
+  \end{block}
+  \textbf{Our setting:} LPT is a $\tfrac{4}{3}$-approx.\ for $P||\Cmax$ $\Rightarrow$ $\beta=\tfrac{3}{4}$. Max-LPT maximises $\Clpt$ $\Rightarrow$ apply Theorem directly.
 \end{frame}
 
 \begin{frame}[shrink=5]{The $\frac{3}{4}$-Approximation Guarantee}
@@ -417,39 +416,72 @@
     Let $\hat x$ be the Max-LPT solution and $x^*$ the bilevel-optimal solution. Then:
     \[\tfrac{3}{4}\,\Copt(x^*)\;\leq\;\Copt(\hat x)\;\leq\;\Copt(x^*)\]
   \end{block}
-  \textbf{Proof:}
-  \begin{itemize}
-    \item By LPT guarantee: $\tfrac34\,\Copt(x)\leq\tfrac34\,\Clpt(x)\leq \Copt(x)\leq\Clpt(x)$ for all $x$
-    \item $\hat x$ maximises $\Clpt$, so $\Clpt(x^*)\leq\Clpt(\hat x)$
-    \item Chain: $\tfrac34\,\Copt(x^*)\leq\tfrac34\,\Clpt(x^*)\leq\tfrac34\,\Clpt(\hat x)\leq\Copt(\hat x)\leq\Copt(x^*)$ \hfill$\square$
-  \end{itemize}
+  \textbf{Proof} (using the two building blocks):
+  \begin{enumerate}\small
+    \item \textbf{Lemma} ($\alpha=\tfrac{4}{3}$, $\beta=\tfrac{3}{4}$): for all $x$,\quad $\tfrac34\,\Copt(x)\leq\tfrac34\,\Clpt(x)\leq\Copt(x)\leq\Clpt(x)$
+    \item $\hat x$ maximises $\Clpt$, so $\;\Clpt(x^*)\leq\Clpt(\hat x)$
+    \item \textbf{Theorem [WF25]:}\quad $\tfrac{3}{4}\cdot\mathrm{Opt}_{\text{bilevel}}\leq\Copt(\hat x)\leq\mathrm{Opt}_{\text{bilevel}}$
+    \item \textbf{Full chain:}\quad $\tfrac34\,\Copt(x^*)\leq\tfrac34\,\Clpt(x^*)\leq\tfrac34\,\Clpt(\hat x)\leq\Copt(\hat x)\leq\Copt(x^*)$ \hfill$\square$
+  \end{enumerate}
   \begin{alertblock}{Practical implication}
     The Max-LPT incumbent is \textbf{guaranteed $\leq 25\%$ suboptimal}.
     In practice the gap is virtually always zero (LPT is often optimal).
   \end{alertblock}
 \end{frame}
 
-\begin{frame}[shrink=5]{Max-LPT Algorithm}
-  \textbf{Key observation:} the \emph{last} scheduled job lands on the least-loaded machine.
-  \[\Clpt = C_{\max}^{(m)} + d_I
-    \quad\text{where $C_{\max}^{(m)}$ = $m$-th largest load, $I$ = last job}\]
+\begin{frame}[shrink=40]{Max-LPT Algorithm: Per-Machine Budget \& Properties}
+    \begin{block}{Structural observation}
+    In any LPT schedule, the \textbf{job that finishes last} $I$ was put on the \textbf{least-loaded machine at the time of scheduling}:
+    \[\Clpt = C_{\max}^{(m)} + d_I\]
+    Makespan is determined by the \emph{minimum machine load} just before $I$ plus its duration $d_I$.
+  \end{block}
+  For a fixed candidate last job $J$, we want to maximise $C_{\max}^{(m)}$ for items $1,\ldots,J$.
+  \begin{block}{Two key properties of the optimal preceding schedule}
+    \begin{itemize}
+      \item \textbf{Property 1} (highest per-machine budget):\\
+            $B^* := \lfloor B/m \rfloor$ is the largest budget assignable equally to each machine.\\
+            No redistribution can give the least-loaded machine more than $B^*$.
+      \item \textbf{Property 2} (best items for $B^*$):\\
+            Given budget $B^*$, the optimal item combination from types $\leq J$ is the unbounded knapsack optimum.
+    \end{itemize}
+    If both hold, no schedule achieves a larger $C_{\max}^{(m)}$: buy $m$ copies of every DP-optimal item and run LPT.
+  \end{block}
+  \begin{block}{Budget adjustment when $\hat{B} := B - mB^* < p_J$}
+    \small Remainder $\hat{B}$ is too small to pay for one copy of $J$.
+    Reduce $B^*$ by 1 (uniformly across machines) until $\hat{B} \geq p_J$.
+    Property 1 holds for the reduced $B^*$; re-query $\mathrm{DP}(J,B^*)$.
+    If $B^*$ reaches~0 before $\hat{B} \geq p_J$, skip $J$ (infeasible).
+  \end{block}
+\end{frame}
+
+\begin{frame}[shrink=40]{Max-LPT Algorithm: Correctness \& Complexity}
+  \begin{block}{Algorithm (pseudocode)}
+    \small
+    Precompute DP table (unbounded knapsack, items $1\ldots n$, budgets $0\ldots B$).\\[0.2em]
+    $z^*\leftarrow 0$\hfill\emph{// best candidate so far}\\
+    \textbf{for} each type $J\in\{1,\ldots,n\}$:\\
+    \qquad $B^*\leftarrow\lfloor B/m\rfloor$\\
+    \qquad \textbf{while} $(B-mB^*)<p_J$ \textbf{and} $B^*>0$:\; $B^*\leftarrow B^*-1$\\
+    \qquad \textbf{if} $(B-mB^*)<p_J$: skip $J$\hfill\emph{// infeasible}\\
+    \qquad $z_J\leftarrow\mathrm{DP}(J,B^*)+d_J$;\; $z^*\leftarrow\max(z^*,z_J)$\\
+    \textbf{return} $z^*$
+  \end{block}
   \begin{columns}[T]
-    \begin{column}{0.50\textwidth}
-      \textbf{MAX-LPT algorithm:}\\[0.15em]
-      \small For each candidate last job $J$:
-      \begin{enumerate}\small
-        \item $B^*\leftarrow\lfloor B/m\rfloor$ (per-machine budget)
-        \item While $(B-mB^*)<p_J$: $B^*\leftarrow B^*-1$
-        \item $z\leftarrow\mathrm{DP}(J,B^*)+d_J$
-      \end{enumerate}
-      \normalsize Return $z^*=\max_J z$\quad [$O(n\cdot B)$]
-    \end{column}
-    \begin{column}{0.47\textwidth}
+    \begin{column}{0.53\textwidth}
       \begin{block}{Correctness}
-        \small $B^*$: max per-machine budget for the least-loaded machine without job $J$'s cost.
-        $\mathrm{DP}(J,B^*)$: max load on that machine.
-        Adding $d_J$ gives the optimum makespan for this candidate last job.
+        \small
+        Any optimal solution has a last job $I$ matching Case 1 or 2.\\[0.2em]
+        For that $I$, Properties 1 \& 2 identify the optimal preceding schedule via $\mathrm{DP}(I,B^*)$.\\[0.2em]
+        Taking $\max_J z_J$ over all candidates covers it.\hfill$\square$
       \end{block}
+    \end{column}
+    \begin{column}{0.44\textwidth}
+      \begin{alertblock}{Complexity: $O(n\cdot B)$}
+        \small
+        DP table precomputed in $O(n\cdot B)$.\\[0.2em]
+        Per candidate $J$: $O(1)$ lookup + $O(B^*/m)$ adjustment.\\[0.2em]
+        $n$ candidates $\Rightarrow O(n\cdot B)$ total.
+      \end{alertblock}
     \end{column}
   \end{columns}
 \end{frame}
@@ -469,7 +501,7 @@
     \begin{itemize}
       \item $\Copt(\hat x)$ is computed anyway to initialise the incumbent
       \item This check costs \textbf{nothing extra}
-      \item Triggered in $\approx\mathbf{84.4\%}$ of our test instances $\Rightarrow$ solved at root
+      \item Triggered in $\approx\mathbf{84.6\%}$ of our test instances $\Rightarrow$ solved at root
     \end{itemize}
   \end{alertblock}
 \end{frame}
@@ -542,7 +574,8 @@
 \end{frame}
 
 \begin{frame}[shrink=8]{Grid Sensitivity Analysis}
-  \textbf{Grid:} $6{\times}6$ (types $\times$ machines), 3 budget multipliers, 5 seeds $=540$ instances; 1\,h limit.
+  \textbf{Grid:} $6{\times}6$ (types $\times$ machines), 3 budget multipliers, 5 seeds $=540$ instances; 1\,h limit.\\[0.15em]
+  \footnotesize\textbf{Types:} 4, 8, 12, 16, 20, 24\quad\textbullet\quad\textbf{Machines:} 2, 4, 6, 8, 10, 12\quad\textbullet\quad\textbf{Multipliers:} 1.3, 2.5, 5.0\normalsize
 
   \begin{center}\small
   \begin{tabular}{lrrrr}
