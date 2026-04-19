@@ -117,7 +117,7 @@
     \begin{itemize}
       \item \textbf{Leader} löst ein unbeschränktes Knapsack-Problem (NP-schwer)
       \item \textbf{Follower} löst paralleles Maschinenplanungsproblem $P||\Cmax$ (NP-schwer)
-      \item Wertfunktion $\Copt(x)$ ist \emph{nicht-konvex} und \emph{unstetig}
+      \item Wertfunktion $\Copt(x)$ ist \emph{nicht-konvex} und \emph{unstetig}.
       Kein geschlossener Ausdruck für $\Copt(x)$: jede Auswertung erfordert das Lösen des Follower-Problems, was kombinatorische Verfahren (z.\,B.\ Branch-and-Bound) auf der oberen Ebene notwendig macht
     \end{itemize}
   \end{block}
@@ -212,7 +212,7 @@
     \begin{column}{0.50\textwidth}
       \textbf{Designentscheidungen:}
       \begin{itemize}
-        \item Tiefensuche $\to$ schnelle Kandidatenaktualisierung $\to$ aggressives Beschneiden
+        \item Tiefensuche $\to$ schnelle Kandidatenaktualisierung $\to$ aggressives pruning
         \item Inkrementelles LPT: $O(m)$ pro Knoten
         \item DP vorberechnet: $O(1)$ Schrankenabfragen
       \end{itemize}
@@ -244,7 +244,7 @@
         \textbf{return} $\Clpt=\max_k L_k$\\[0.2em]
         \normalsize Zeit: $O(J\log m)$
       \end{block}
-      \textbf{Praxis:} LPT ist in $\approx84\%$ unserer Testinstanzen \emph{optimal}.
+      \textbf{Praxis:} LPT ist in $\approx84,6\%$ unserer Testinstanzen \emph{optimal}.
     \end{column}
   \end{columns}
 \end{frame}
@@ -253,7 +253,7 @@
   Auf Tiefe $d$ mit Budget $\Brem$ berechnen wir eine \emph{obere Schranke}:
   \[\Copt(x_1,\ldots,x_n)\;\leq\;\UB(x_1,\ldots,x_d,\Brem)
     \quad\forall\;x_{d+1},\ldots,x_n\text{ (Ergänzungen)}\]
-  \textbf{Beschneiden} wenn $\;\UB\leq\Cinc$.
+  \textbf{prunen}, wenn $\;\UB\leq\Cinc$.
   \[
     \UB = \underbrace{C_{\max}^{\mathrm{LPT},(d)}}_{\text{fixiert, 1..}d}
          +\;\max_{\sum_{i>d}p_iy_i\leq\Brem}
@@ -338,7 +338,7 @@
         Max-LPT \textbf{optimal} in $O(n\cdot B)$ per DP gelöst.
       \end{alertblock}
       \begin{block}{Kompromiss}
-        \small $n$ tiefenspezifische DP-Tabellen vs.\ eine Ceiling-Tabelle; amortisiert durch besseres Beschneiden.
+        \small $n$ tiefenspezifische DP-Tabellen vs.\ eine Ceiling-Tabelle; amortisiert durch besseres pruning.
       \end{block}
     \end{column}
   \end{columns}
@@ -353,7 +353,7 @@
   \end{block}
   \begin{block}{Satz (Zweistufige Approx.\ [Weninger \& Fukasawa 2025])}
     \vspace{-0.2em}
-    \small Wenn $\beta\cdot\mathrm{Opt}(x)\leq\beta\cdot\mathrm{approx}(x)\leq\mathrm{Opt}(x)\leq\mathrm{approx}(x)$ für alle $x$ und $\hat x\in\arg\max_x\,\mathrm{approx}(x)$, dann:
+    \small Wenn $\beta \leq 1$, $\beta\cdot\mathrm{Opt}(x)\leq\beta\cdot\mathrm{approx}(x)\leq\mathrm{Opt}(x)\leq\mathrm{approx}(x)$ für alle $x$, $\mathrm{approx}(x)$ für das Follower-problem stets zulässig ist und $\hat x\in\arg\max_x\,\mathrm{approx}(x)$, dann:
     \[\beta\cdot\mathrm{Opt}_{\text{zweistufig}}\;\leq\;\mathrm{Opt}(\hat x)\;\leq\;\mathrm{Opt}_{\text{zweistufig}}\]
     \vspace{-0.3em}
   \end{block}
@@ -411,7 +411,6 @@
     \textbf{für} jeden Typ $J\in\{1,\ldots,n\}$:\\
     \qquad $B^*\leftarrow\lfloor B/m\rfloor$\\
     \qquad \textbf{solange} $(B-mB^*)<p_J$ \textbf{und} $B^*>0$:\; $B^*\leftarrow B^*-1$\\
-    \qquad \textbf{wenn} $(B-mB^*)<p_J$: $J$ überspringen\hfill\emph{// unzulässig}\\
     \qquad $z_J\leftarrow\mathrm{DP}(J,B^*)+d_J$;\; $z^*\leftarrow\max(z^*,z_J)$\\
     \textbf{return} $z^*$
   \end{block}
@@ -419,8 +418,8 @@
     \begin{column}{0.53\textwidth}
       \begin{block}{Korrektheit}
         \small
-        Jede optimale Lösung hat einen letzten Auftrag $I$ (Fall 1 oder 2).\\[0.2em]
-        Für dieses $I$ identifizieren Eigenschaften 1 \& 2 den optimalen vorhergehenden Plan via $\mathrm{DP}(I,B^*)$.\\[0.2em]
+        Jede optimale Lösung hat einen letzten Auftrag $I$.\\[0.2em]
+        Für dieses $I$ identifizieren Eigenschaften 1 \& 2 einen optimalen vorhergehenden Plan via $\mathrm{DP}(I,B^*)$.\\[0.2em]
         $\max_J z_J$ über alle Kandidaten deckt das Optimum ab.\hfill$\square$
       \end{block}
     \end{column}
@@ -445,7 +444,7 @@
   \end{block}
   Sei $\hat x\in\arg\max_x\Clpt(x)$. Wenn $\Clpt(\hat x)=\Copt(\hat x)$, dann gilt für \emph{alle} zulässigen $x$:
   \[\Copt(\hat x)=\Clpt(\hat x)\geq\Clpt(x)\geq\Copt(x)\]
-  $\Rightarrow$ $\hat x$ ist das \textbf{globale zweistufige Optimum} — kein B\&B-Baum erforderlich!
+  $\Rightarrow$ $\hat x$ ist das \textbf{globale zweistufige Optimum} - kein B\&B-Baum erforderlich!
   \begin{alertblock}{Auswirkung}
     \begin{itemize}
       \item $\Copt(\hat x)$ wird ohnehin berechnet, um den Kandidaten zu initialisieren
@@ -455,34 +454,34 @@
   \end{alertblock}
 \end{frame}
 
-\begin{frame}[shrink=5]{Vollständiger Algorithmus}
+\begin{frame}[shrink=5]{Complete Algorithm}
   \begin{columns}[T]
     \begin{column}{0.53\textwidth}
       \small
       \begin{enumerate}
-        \item Max-LPT lösen $\to\hat x$;\quad $\Clpt(\hat x)$, $\Copt(\hat x)$ berechnen
-        \item \textbf{Wenn} $\Clpt(\hat x)=\Copt(\hat x)$: \textbf{return} $\hat x$
-        \item $\Cinc\leftarrow\Copt(\hat x)$;\quad Wurzel in Stapel $Q$ legen
-        \item \textbf{Solange} $Q\neq\emptyset$:
+        \item Solve Max-LPT $\to\hat x$;\quad compute $\Clpt(\hat x)$, $\Copt(\hat x)$
+        \item \textbf{If} $\Clpt(\hat x)=\Copt(\hat x)$: \textbf{return} $\hat x$
+        \item $\Cinc\leftarrow\Copt(\hat x)$;\quad push root to stack $Q$
+        \item \textbf{While} $Q\neq\emptyset$:
         \begin{itemize}\small
-          \item Knoten $(d,x_1,\ldots,x_d,\Brem)$ entnehmen
-          \item Wenn $d=n$: Follower-Problem lösen; $\Cinc$ aktualisieren
-          \item Sonst: $\UB(d,\Brem)$ berechnen
-          \item Wenn $\UB\leq\Cinc$: \textbf{beschneiden}
-          \item Sonst: Kinder einschieben (Tiefensuche)
+          \item Remove node $(d,x_1,\ldots,x_d,\Brem)$
+          \item If $d=n$: solve follower; update $\Cinc$
+          \item Else: compute $\UB(d,\Brem)$
+          \item If $\UB\leq\Cinc$: \textbf{prune}
+          \item Else: push children (depth-first)
         \end{itemize}
-        \item \textbf{return} incumbent
+        \item Return incumbent
       \end{enumerate}
       \smallskip
-      {\footnotesize Inspiriert durch [Weninger \& Fukasawa 2025].}
+      {\footnotesize Inspired by [Weninger \& Fukasawa 2025].}
     \end{column}
     \begin{column}{0.44\textwidth}
-      \begin{block}{Blattoptimierung}
-        \small Auf Tiefe $n{-}1$: nur das Kind, das das \emph{maximale} verbleibende Budget ausgibt, ist relevant.
-        Alle anderen erzeugen ein kleineres oder gleiches $\Copt$.
+      \begin{block}{Leaf optimisation}
+        \small At depth $n{-}1$: only the child spending \emph{maximum} remaining budget matters.
+        All others produce a smaller or equal $\Copt$.
       \end{block}
-      \begin{block}{Follower-Löser}
-        \small Gurobi 12.0.3 [Gurobi Optimization 2024] löst die MIP-Formulierung von $P||\Cmax$ an Blättern.
+      \begin{block}{Follower solver}
+        \small Gurobi 12.0.3 [Gurobi Optimization 2024] solves the MIP formulation of $P||\Cmax$ at leaves.
       \end{block}
     \end{column}
   \end{columns}
@@ -637,7 +636,6 @@
         \small
         \begin{itemize}
           \item Verwandte/unverwandte Maschinen
-          \item Stochastische Bearbeitungszeiten
           \item Wurzeloptimale Instanzen charakterisieren
         \end{itemize}
       \end{block}
