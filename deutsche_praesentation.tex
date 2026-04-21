@@ -380,11 +380,11 @@
 
 \begin{frame}[shrink=45]{Max-LPT-Algorithmus: Budget pro Maschine \& Eigenschaften}
   \begin{block}{Strukturelle Beobachtung}
-    In jedem LPT-Plan wurde der \textbf{zuletzt geplante Auftrag} $I$ auf die \textbf{am wenigsten belastete Maschine} zum Planungszeitpunkt gelegt:
-    \[\Clpt = C_{\max}^{(m)} + d_I\]
+    In jedem LPT-Plan wurde der \textbf{zuletzt bearbeitete Auftrag} $I$ auf die \textbf{am wenigsten belastete Maschine} zum Planungszeitpunkt gelegt:
+    \[\Clpt = C_{\max}^{LPT(m)} + d_I\]
     Der Makespan wird durch die \emph{minimale Maschinenlast} unmittelbar vor $I$ plus seiner Dauer $d_I$ bestimmt.
   \end{block}
-  Für einen festen Kandidaten-Letzten-Auftrag $J$ wollen wir $C_{\max}^{(m)}$ für Elemente $1,\ldots,J$ maximieren.
+  Für einen festen Kandidaten-Letzten-Auftrag $J$ wollen wir $C_{\max}^{LPT(m)}$ für Elemente $1,\ldots,J$ maximieren.
   \begin{block}{Zwei Haupteigenschaften des optimalen vorhergehenden Plans}
     \begin{itemize}
       \item \textbf{Eigenschaft 1} (höchstes Budget pro Maschine):\\
@@ -393,7 +393,7 @@
       \item \textbf{Eigenschaft 2} (beste Elemente für $B^*$):\\
             Für Budget $B^*$ ist die optimale Elementkombination aus Typen $\leq J$ das Optimum des unbeschränkten Knapsack-Problems.
     \end{itemize}
-    Wenn beide gelten, erzielt kein Plan ein größeres $C_{\max}^{(m)}$: kaufe $m$ Kopien jedes DP-optimalen Elements und führe LPT aus.
+    Wenn beide gelten, erzielt kein Plan ein größeres $C_{\max}^{LPT(m)}$: kaufe $m$ Kopien jedes DP-optimalen Elements und führe LPT aus.
   \end{block}
   \begin{block}{Budgetanpassung wenn $\hat{B} := B - mB^* < p_J$}
     \small Rest $\hat{B}$ ist zu klein, um eine Kopie von $J$ zu bezahlen.
@@ -656,6 +656,15 @@
 
 % ===================================================================================
 \appendix
+
+\begin{frame}{Hinweis zur KI-Nutzung}
+  \begin{block}{Einsatz KI-basierter Hilfsmittel}
+    Teile dieses Vortrags wurden mithilfe von KI-gestützten Werkzeugen (GitHub Copilot (GPT-4.1), Anthropic Claude (Claude Opus 4.6, Claude Sonnet 4, Claude Sonnet 4.6)) generiert, überarbeitet und/oder verbessert. Die KI wurde für verschiedene Aufgaben eingesetzt, darunter das Erstellen
+    von Grundversionen, das Überarbeiten der Folien und dem Beheben von Fehlern.
+    Alle generierten oder modifizierten Abschnitte wurden von mir sorgfältig geprüft, nachvollzogen und ggf.
+    angepasst. Die Verantwortung und das Verständnis für die hier präsentierten Inhalte liegen vollständig bei mir.
+  \end{block}
+\end{frame}
 
 \begin{frame}[allowframebreaks]{Literatur}
   \footnotesize
